@@ -17,7 +17,7 @@ library(abind)
 data_loc <- "../../dme_files/"
 
 
-mod <- cmdstan_model("../stan_models/mc_nngp.stan", 
+mod <- cmdstan_model("../stan_models/mc_nngp2.stan", 
                      include_paths = gptools_include_path())
 subjects <- as.character(1:22)
 subjects <- ifelse(nchar(subjects) == 1, paste0(0, subjects), subjects)
@@ -201,7 +201,7 @@ res <- future_lapply(unique(vox_ids),
   			                   sigma_tau = .1,
   			                   sigma = 3.5)
 			 fit <- mod$sample(data = stan_data, chains = 1, 
-			                   iter_warmup = 100, iter_sampling = 100)
+			                   iter_warmup = 1000, iter_sampling = 1000)
 			 
 			 draws <- fit$draws(format = "df")
 			 
@@ -274,4 +274,4 @@ res <- future_lapply(unique(vox_ids),
 
 }
 
-saveRDS(param_means_all, "./test_means.rds")
+saveRDS(param_means_all, "./test_means2.rds")
