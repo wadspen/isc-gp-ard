@@ -13,7 +13,7 @@ library(stringr)
 library(future.apply)
 #library(INLA)
 
-data_loc <- "../dme_files/"
+data_loc <- "../../dme_files/"
 
 
 mod <- cmdstan_model("../stan_models/gtools_nn.stan", include_paths = gptools_include_path())
@@ -27,8 +27,8 @@ mask_name <- "_ses-01_task-dme_run-01_bold/func_seg/wm_mask.nii"
 all_bold <- list()
 for (i in 1:length(subjects)) {
   sub <- paste0("sub-", subjects[i])
-  file_path <- paste0(sub, fold2, sub, file)
-  mask_path <- paste0(sub, fold2, sub, mask_name)
+  file_path <- paste0(data_loc, sub, fold2, sub, file)
+  mask_path <- paste0(data_loc, sub, fold2, sub, mask_name)
   if (subjects[i] == "17") {
     while (str_detect(file_path, "ses-01")) {
       file_path <- str_replace(file_path, "ses-01", "ses-03")
@@ -36,7 +36,7 @@ for (i in 1:length(subjects)) {
   }
   bold <- readNifti(file_path)
   all_bold[[i]] <- bold[,,,1:288]
-  print(dim(bold))
+  print(subjects[i])
   
 }
 
@@ -49,7 +49,17 @@ for (i in 1:length(all_bold)) {
   coords$sub <- subjects[i]
   all_coords <- rbind(all_coords, coords)
 }
+
+full_coords <- all_coords %>% 
+  mutate(voxel = paste(dim1, dim2, dim3, sep = "_")) %>% 
+  group_by(voxel) %>% 
+  summarise(n = n()) %>% 
+  filter(n == length(subjects)) %>%
+  unique()
+
 coords_int_full <- all_coords %>%
+  mutate(voxel = paste(dim1, dim2, dim3, sep = "_")) %>% 
+  filter(voxel %in% unique(full_coords$voxel)) %>% 
   distinct(sub, dim1, dim2, dim3) %>%
   group_by(dim1, dim2, dim3) %>%
   summarise(n_groups = n_distinct(sub), .groups = "drop") %>%
@@ -87,6 +97,7 @@ hdr_df_ab <- ab_df %>%
   pivot_longer(4:ncol(ab_df), names_to = "time", values_to = "hdr") %>% 
   mutate(time = as.numeric(str_replace(time, "t", "")))
 
+hdr_df_ab$hdr <- as.numeric(hdr_df_ab$hdr)
 
 hdr_df_ab <- hdr_df_ab %>%
 	group_by(participant_id, x, y) %>%
