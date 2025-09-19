@@ -135,7 +135,7 @@ for (v in 1:3) {
   coords_int$vox_id <- vox_ids
   
   
-  print(paste0("Iteration ", i, " of ", length(i), " with ",
+  print(paste0("Iteration ", v, " of ", 3, " with ",
               dim(coords_int)[1], " voxels."))
   plan(multisession, workers = 120)  # Windows-friendly
 
@@ -268,8 +268,7 @@ res <- future_lapply(unique(vox_ids),
                          return(NULL)   # or NULL, or some sentinel value
                        })
                      })
-    param_means <- do.call(rbind, res) %>% 
-      mutate(coords = paste(xc, yc, sep = "_"))
+    param_means <- do.call(rbind, res)
     
     param_means_all <- rbind(param_means_all, param_means)
 
