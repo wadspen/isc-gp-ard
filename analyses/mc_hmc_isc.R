@@ -186,20 +186,21 @@ res <- future_lapply(unique(vox_ids),
 			 
          edge_index <- rbind(1:(ncol(y_dat) - 1), 2:ncol(y_dat))
   			 
-  			 stan_data <- list(N = n, S = nrow(y_dat), 
-  			                   C = length(unique(hdr_df$voxel)),
-  			                   y = y_arr,
-  			                   x = matrix(unique(hdr_df$time), ncol = 1)*2,
-  			                   dx = 1*2,
-  			                   nf = n%/%2 + 1,
-  			                   edge_index = edge_index,
-  			                   mu_rho = 7,
-  			                   sigma_rho = .01,
-  			                   mu_sigma = 3.5,
-  			                   sigma_sigma = .4,
-  			                   mu_tau = 1,
-  			                   sigma_tau = .1,
-  			                   sigma = 3.5)
+         stan_data <- list(N = n, S = nrow(y_dat), 
+                           C = length(unique(hdr_df$voxel)),
+                           y = y_arr,
+                           x = matrix(unique(hdr_df$time), ncol = 1)*2,
+                           dx = 1*2,
+                           nf = n%/%2 + 1,
+                           edge_index = edge_index,
+                           mu_rho = log(500),
+                           sigma_rho = .025,
+                           mu_sigma = 0,
+                           sigma_sigma = .01,
+                           mu_tau = 1,
+                           sigma_tau = .1,
+                           r = .05,
+                           sigma = 3.5)
 			 fit <- mod$sample(data = stan_data, chains = 1, 
 			                   iter_warmup = 1000, iter_sampling = 1000)
 			 
