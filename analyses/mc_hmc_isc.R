@@ -105,7 +105,7 @@ hdr_df_ab <- hdr_df_ab %>%
 	group_by(participant_id, x, y) %>%
 	mutate(hdr = as.numeric(scale(hdr, center = TRUE, scale = TRUE))) %>%
 	ungroup() %>%
-	filter(!is.na(hdr), time < 51)
+	filter(!is.na(hdr))
 vs <- 25
 param_means_all <- data.frame()
 for (v in 1:3) {
@@ -193,10 +193,10 @@ res <- future_lapply(unique(vox_ids),
   			                   dx = 1*2,
   			                   nf = n%/%2 + 1,
   			                   edge_index = edge_index,
-  			                   mu_rho = 0,
-  			                   sigma_rho = .05,
+  			                   mu_rho = 7,
+  			                   sigma_rho = .01,
   			                   mu_sigma = 3.5,
-  			                   sigma_sigma = .1,
+  			                   sigma_sigma = .4,
   			                   mu_tau = 1,
   			                   sigma_tau = .1,
   			                   sigma = 3.5)
