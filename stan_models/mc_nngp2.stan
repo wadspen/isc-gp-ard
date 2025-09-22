@@ -21,7 +21,7 @@ data {
 
 parameters {
   real<lower=0> sigma;               // marginal std dev of GP
-  array[C] real<lower=0> rho;        // lengthscale
+  array[C] real rho;        // lengthscale
   array[C] real<lower=0> tau;        // observation noise sd
   matrix[N, C] f;                     // latent GP per channel
 }
@@ -42,7 +42,7 @@ model {
   tau   ~ normal(mu_tau, sigma_tau);
   
   for (c in 1:C) {
-    target += gp_graph_exp_quad_cov_lpdf(f[, c] | zeros_vector(N), x, sigma, 1/rho[c], edge_index);
+    target += gp_graph_exp_quad_cov_lpdf(f[, c] | zeros_vector(N), x, sigma, exp(rho[c]), edge_index);
   }
 
   // Likelihood: vectorized over subjects
