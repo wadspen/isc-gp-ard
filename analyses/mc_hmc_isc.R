@@ -17,7 +17,7 @@ library(abind)
 data_loc <- "../../dme_files/"
 
 
-mod <- cmdstan_model("../stan_models/mc_nngp2.stan", 
+mod <- cmdstan_model("../stan_models/mc_nngp_hs.stan", 
                      include_paths = gptools_include_path())
 subjects <- as.character(1:22)
 subjects <- ifelse(nchar(subjects) == 1, paste0(0, subjects), subjects)
@@ -275,4 +275,4 @@ res <- future_lapply(unique(vox_ids),
 
 }
 
-saveRDS(param_means_all, "./test_means2.rds")
+saveRDS(param_means_all, "./test_means_hs.rds")
