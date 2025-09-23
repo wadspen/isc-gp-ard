@@ -97,7 +97,8 @@ for (i in 1:length(all_bold)) {
 
 hdr_df_ab <- ab_df %>% 
   pivot_longer(4:ncol(ab_df), names_to = "time", values_to = "hdr") %>% 
-  mutate(time = as.numeric(str_replace(time, "t", "")))
+  mutate(time = as.numeric(str_replace(time, "t", ""))) %>% 
+  filter(time < 51)
 
 hdr_df_ab$hdr <- as.numeric(hdr_df_ab$hdr)
 
@@ -193,13 +194,14 @@ res <- future_lapply(unique(vox_ids),
                            dx = 1*2,
                            nf = n%/%2 + 1,
                            edge_index = edge_index,
-                           mu_rho = log(500),
-                           sigma_rho = .025,
+                           mu_rho = log(1000),
+                           sigma_rho = .1,
                            mu_sigma = 0,
                            sigma_sigma = .01,
                            mu_tau = 1,
                            sigma_tau = .1,
-                           r = .05,
+                           r = 1,
+                           m = .5,
                            sigma = 3.5)
 			 fit <- mod$sample(data = stan_data, chains = 1, 
 			                   iter_warmup = 1000, iter_sampling = 1000)
@@ -226,6 +228,31 @@ res <- future_lapply(unique(vox_ids),
 			 }
 			 
 			 rownames(preds_df) <- 1:nrow(preds_df)
+			 
+			 tau_sigs <- draws %>% 
+			   select(contains("tau_sig")) %>% 
+			   as.matrix() %>% 
+			   as.numeric()
+			 
+			 lambdas <- draws %>% 
+			   select(contains("lambda")) %>% 
+			   pivot_longer(1:length(un_vox),
+			                names_to = "param",
+			                values_to = "post")
+			 
+			 
+			 kappa_df <- data.frame(lambdas, 
+			                        tausig = rep(tau_sigs, 
+			                                     length(un_vox))) %>% 
+			   rowwise() %>% 
+			   mutate(kappa = 1/(1 + tausig^2 * post^2)) %>% 
+			   mutate(param = str_replace(param, 
+			                              "lambda", "kappa")) %>% 
+			   group_by(param) %>% 
+			   summarise(m = mean(kappa),
+			             sd = sd(kappa))
+			 
+			 kappa_df$voxel <- un_vox
 			 
 			 rho_sum <- draws %>% 
 			   select(contains("rho")) %>% 
@@ -254,7 +281,7 @@ res <- future_lapply(unique(vox_ids),
 			                         sd = sd(draws$sigma, na.rm = TRUE), 
 			                         voxel = un_vox)
 			 
-			 param_sums <- rbind(rho_sum, tau_sum, sigma_sum)
+			 param_sums <- rbind(rho_sum, tau_sum, sigma_sum, kappa_df)
 			 
 			 fin_preds <- preds_df %>% 
 			   left_join(param_sums, by = "voxel")

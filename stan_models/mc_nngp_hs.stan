@@ -17,7 +17,8 @@ data {
   real<lower=0> sigma_sigma;
   real mu_tau;
   real<lower=0> sigma_tau;
-  real r;                            // horsehoe regularization
+  real<lower=0> r;                            // horsehoe regularization
+  real<lower=0> m;
 }
 
 parameters {
@@ -26,6 +27,7 @@ parameters {
   vector<lower=0>[C] lambda;     // horseshoe local
   array[C] real<lower=0> tau;        // observation noise sd
   matrix[N, C] f;                     // latent GP per channel
+  real<lower=0> tau_sigma_rho;
 }
 
 // transformed parameters {
@@ -43,10 +45,11 @@ parameters {
 
 model {
   // Priors
-  lambda ~ normal(0, 1);
+  tau_sigma_rho ~ normal(0,sigma_rho);
+  lambda ~ normal(0, m);
   sigma ~ normal(mu_sigma, sigma_sigma);
-  rho   ~ normal(mu_rho, sigma_rho .* lambda);
-  // rho ~ normal(mu_rho, sqrt(lambda2_tilde));
+  rho   ~ normal(mu_rho, tau_sigma_rho .* lambda);
+  // rho ~ normal(mu_rho, tau_sigma_rho .* sqrt(lambda2_tilde));
   tau   ~ normal(mu_tau, sigma_tau);
   
   for (c in 1:C) {
