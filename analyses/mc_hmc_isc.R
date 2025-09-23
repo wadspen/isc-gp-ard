@@ -195,13 +195,13 @@ res <- future_lapply(unique(vox_ids),
                            nf = n%/%2 + 1,
                            edge_index = edge_index,
                            mu_rho = log(1000),
-                           sigma_rho = .1,
+                           sigma_rho = .1/sqrt(prod(dim(y_arr)[1:2])),
                            mu_sigma = 0,
                            sigma_sigma = .01,
                            mu_tau = 1,
                            sigma_tau = .1,
                            r = 1,
-                           m = .5,
+                           m = 1,
                            sigma = 3.5)
 			 fit <- mod$sample(data = stan_data, chains = 1, 
 			                   iter_warmup = 1000, iter_sampling = 1000)
@@ -245,7 +245,7 @@ res <- future_lapply(unique(vox_ids),
 			                        tausig = rep(tau_sigs, 
 			                                     length(un_vox))) %>% 
 			   rowwise() %>% 
-			   mutate(kappa = 1/(1 + tausig^2 * post^2)) %>% 
+			   mutate(kappa = 1/(1 + n * tausig^2 * post^2)) %>% 
 			   mutate(param = str_replace(param, 
 			                              "lambda", "kappa")) %>% 
 			   group_by(param) %>% 
@@ -267,7 +267,7 @@ res <- future_lapply(unique(vox_ids),
 			 
 			 
 			 tau_sum <- draws %>% 
-			   select(contains("tau")) %>% 
+			   select(contains("tau"), !contains("sigma_rho")) %>% 
 			   pivot_longer(1:length(un_vox), 
 			                names_to = "param", values_to = "post") %>% 
 			   group_by(param) %>% 
@@ -302,4 +302,4 @@ res <- future_lapply(unique(vox_ids),
 
 }
 
-saveRDS(param_means_all, "./test_means_hs.rds")
+saveRDS(param_means_all, "./test_means_hs2.rds")
