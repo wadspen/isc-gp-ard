@@ -46,7 +46,7 @@ parameters {
 model {
   // Priors
   tau_sigma_rho ~ normal(0,sigma_rho);
-  lambda ~ student_t(20, 0, m);
+  lambda ~ normal(0, m);
   // sigma ~ normal(mu_sigma, sigma_sigma);
   // rho   ~ normal(mu_rho, tau_sigma_rho .* lambda);
   sigma ~ std_normal();
