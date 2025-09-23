@@ -203,8 +203,11 @@ res <- future_lapply(unique(vox_ids),
                            r = 1,
                            m = 1,
                            sigma = 3.5)
-			 fit <- mod$sample(data = stan_data, chains = 1, 
-			                   iter_warmup = 1000, iter_sampling = 1000)
+         fit <- mod$sample(data = stan_data, 
+                           chains = 1, 
+                           # parallel_chains = 4,
+                           iter_warmup = 1000, 
+                           iter_sampling = 1000)
 			 
 			 draws <- fit$draws(format = "df")
 			 
@@ -245,7 +248,7 @@ res <- future_lapply(unique(vox_ids),
 			                        tausig = rep(tau_sigs, 
 			                                     length(un_vox))) %>% 
 			   rowwise() %>% 
-			   mutate(kappa = 1/(1 + n * tausig^2 * post^2)) %>% 
+			   mutate(kappa = 1/(1 + prod(dim(y_arr)[2]) * tausig^2 * post^2)) %>% 
 			   mutate(param = str_replace(param, 
 			                              "lambda", "kappa")) %>% 
 			   group_by(param) %>% 
