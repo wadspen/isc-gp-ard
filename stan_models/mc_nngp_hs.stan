@@ -53,7 +53,7 @@ model {
   tau   ~ normal(mu_tau, sigma_tau);
   
   for (c in 1:C) {
-    target += gp_graph_matern52_cov_lpdf(f[, c] | zeros_vector(N), x, 
+    target += gp_graph_exp_quad_cov_lpdf(f[, c] | zeros_vector(N), x, 
                                          exp(sigma), 
                                          exp(rho[c]), edge_index);
   }
