@@ -47,15 +47,19 @@ model {
   // Priors
   tau_sigma_rho ~ normal(0,sigma_rho);
   lambda ~ normal(0, m);
-  sigma ~ normal(mu_sigma, sigma_sigma);
-  rho   ~ normal(mu_rho, tau_sigma_rho .* lambda);
+  // sigma ~ normal(mu_sigma, sigma_sigma);
+  // rho   ~ normal(mu_rho, tau_sigma_rho .* lambda);
+  sigma ~ std_normal();
+  rho ~ std_normal();
   // rho ~ normal(mu_rho, tau_sigma_rho .* sqrt(lambda2_tilde));
   tau   ~ normal(mu_tau, sigma_tau);
   
   for (c in 1:C) {
     target += gp_graph_exp_quad_cov_lpdf(f[, c] | zeros_vector(N), x, 
-                                         exp(sigma), 
-                                         exp(rho[c]), edge_index);
+                                         exp(mu_sigma + sigma_sigma* sigma), 
+                                         exp(mu_rho + 
+                                         tau_sigma_rho * lambda * rho[c]), 
+                                         edge_index);
   }
 
   // Likelihood: vectorized over subjects
