@@ -201,6 +201,7 @@ res <- future_lapply(unique(vox_ids),
                            mu_tau = 1,
                            sigma_tau = .1,
                            r = 1,
+                           nu = 2000,
                            m = 1,
                            sigma = 3.5)
          fit <- mod$sample(data = stan_data, 

@@ -18,6 +18,7 @@ data {
   real mu_tau;
   real<lower=0> sigma_tau;
   real<lower=0> r;                            // horsehoe regularization
+  real<lower=0> nu;
   real<lower=0> m;
 }
 
@@ -46,7 +47,8 @@ parameters {
 model {
   // Priors
   tau_sigma_rho ~ normal(0,sigma_rho);
-  lambda ~ normal(0, m);
+  lambda ~ student_t(nu, 0, m);
+  // lambda ~ cauchy(0, m);
   // sigma ~ normal(mu_sigma, sigma_sigma);
   // rho   ~ normal(mu_rho, tau_sigma_rho .* lambda);
   sigma ~ std_normal();
