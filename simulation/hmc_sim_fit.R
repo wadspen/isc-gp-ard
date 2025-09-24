@@ -58,7 +58,7 @@ for (v in 1:3) {
   
   print(paste0("Iteration ", v, " of ", 3, " with ",
               dim(coords_int)[1], " voxels."))
-  plan(multisession, workers = 120)  # Windows-friendly
+  plan(multisession, workers = 4)  # Windows-friendly
 
 # coords_int <- expand.grid(1:7, 1:5, 1)
 res <- future_lapply(unique(vox_ids),
@@ -73,7 +73,7 @@ res <- future_lapply(unique(vox_ids),
          hdr_df <- hdr_df_pb %>% 
              # filter(x == xc, y == yc) %>%
              filter(voxel %in% coords_int$voxel[coords_int$vox_id == ind]) %>% 
-             select(participant_id, hdr, time, voxel)
+             select(subject, hdr, time, voxel)
          
          n <- length(unique(hdr_df$time))
          x <- unique(hdr_df$time)
@@ -94,7 +94,7 @@ res <- future_lapply(unique(vox_ids),
              filter(voxel == un_vox[i]) %>% 
              # select(-time) %>% 
              # mutate(subject = paste("sub", subject, sep = "-")) %>% 
-             pivot_wider(id_cols = time, names_from = participant_id, 
+             pivot_wider(id_cols = time, names_from = subject, 
                          values_from = hdr) %>% 
              select(-time) %>% 
              t() %>% 
