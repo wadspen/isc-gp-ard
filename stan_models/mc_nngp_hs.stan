@@ -43,7 +43,8 @@ transformed parameters {
 // 
 //   for (c in 1:C) lambda2_tilde[c] = (r^2 * lambda[c]^2) /
 //                                     (r^2 + sigma_rho^2 * lambda[c]^2);
-  vector[C] rho = -abs(phi * tau_sigma_rho * lambda + mu_rho);
+  vector[C] rho;
+  for (c in 1:C) rho[c] = -abs(phi[c]) * tau_sigma_rho * lambda[c] + mu_rho;
 }
 
 model {
