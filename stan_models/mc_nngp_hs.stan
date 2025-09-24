@@ -18,12 +18,13 @@ data {
   real mu_tau;
   real<lower=0> sigma_tau;
   real<lower=0> r;                            // horsehoe regularization
-  real<lower=0> nu;
+  real<lower=0> nut;
+  real<lower=0> nul;
   real<lower=0> m;
 }
 
 parameters {
-  real sigma;               // marginal std dev of GP
+  vector[C] sigma;               // marginal std dev of GP
   vector[C] rho;        // lengthscale
   vector<lower=0>[C] lambda;     // horseshoe local
   array[C] real<lower=0> tau;        // observation noise sd
@@ -46,8 +47,8 @@ parameters {
 
 model {
   // Priors
-  tau_sigma_rho ~ normal(0,sigma_rho);
-  lambda ~ student_t(nu, 0, m);
+  tau_sigma_rho ~ student_t(nut, 0,sigma_rho);
+  lambda ~ student_t(nul, 0, m);
   // lambda ~ cauchy(0, m);
   // sigma ~ normal(mu_sigma, sigma_sigma);
   // rho   ~ normal(mu_rho, tau_sigma_rho .* lambda);
@@ -58,7 +59,7 @@ model {
   
   for (c in 1:C) {
     target += gp_graph_exp_quad_cov_lpdf(f[, c] | zeros_vector(N), x, 
-                                         exp(mu_sigma + sigma_sigma* sigma), 
+                                         exp(mu_sigma + sigma_sigma * sigma[c]), 
                                          exp(mu_rho + 
                                          tau_sigma_rho * lambda[c] * rho[c]), 
                                          edge_index);
