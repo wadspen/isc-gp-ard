@@ -25,14 +25,14 @@ data {
 
 parameters {
   vector[C] sigma;               // marginal std dev of GP
-  vector[C] rho;        // lengthscale
+  vector[C] phi;        // lengthscale
   vector<lower=0>[C] lambda;     // horseshoe local
   array[C] real<lower=0> tau;        // observation noise sd
   matrix[N, C] f;                     // latent GP per channel
   real<lower=0> tau_sigma_rho;
 }
 
-// transformed parameters {
+transformed parameters {
 //   // matrix[N, C] f;                     // latent GP per channel
 //   //
 //   // for (c in 1:C) {
@@ -43,7 +43,8 @@ parameters {
 // 
 //   for (c in 1:C) lambda2_tilde[c] = (r^2 * lambda[c]^2) /
 //                                     (r^2 + sigma_rho^2 * lambda[c]^2);
-// }
+  vector[C] rho = -abs(phi * tau_sigma_rho * lambda + mu_rho);
+}
 
 model {
   // Priors
@@ -53,15 +54,16 @@ model {
   // sigma ~ normal(mu_sigma, sigma_sigma);
   // rho   ~ normal(mu_rho, tau_sigma_rho .* lambda);
   sigma ~ std_normal();
-  rho ~ std_normal();
+  phi ~ std_normal();
   // rho ~ normal(mu_rho, tau_sigma_rho .* sqrt(lambda2_tilde));
   tau ~ normal(mu_tau, sigma_tau);
   
   for (c in 1:C) {
     target += gp_graph_exp_quad_cov_lpdf(f[, c] | zeros_vector(N), x, 
-                                         exp(mu_sigma + sigma_sigma * sigma[c]), 
-                                         exp(mu_rho + 
-                                         tau_sigma_rho * lambda[c] * rho[c]), 
+                                         exp(mu_sigma + sigma_sigma* sigma[c]), 
+                                         // exp(mu_rho + 
+                                         // tau_sigma_rho * lambda[c] * rho[c]), 
+                                         exp(rho[c]),
                                          edge_index);
   }
 
