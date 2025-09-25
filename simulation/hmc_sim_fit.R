@@ -18,23 +18,23 @@ library(abind)
 data_loc <- "../../dme_files/"
 
 
-mod <- cmdstan_model("../stan_models/mc_nngp_hs.stan", 
+mod <- cmdstan_model("../stan_models/mc_nngp_trho.stan", 
                      include_paths = gptools_include_path())
 hdr_df_ab <- hdr_sim %>%
   group_by(subject, x, y) %>%
   mutate(hdr = as.numeric(scale(hdr, center = TRUE, scale = TRUE))) %>%
   ungroup() %>%
   filter(!is.na(hdr)) %>% 
-  filter()
+  filter(time < 51)
 
-vs <- 21
+vs <- 18
 param_means_all <- data.frame()
 for (v in 1:3) {
   start <- (v - 1) * vs + 1
   end   <- v * vs
   
   hdr_df_pb <- hdr_df_ab %>% 
-    filter(between(y, start, end)) %>% 
+    filter(between(c, start, end)) %>% 
     mutate(voxel = paste(x, y, sep = "_"))
 
 
@@ -43,6 +43,7 @@ for (v in 1:3) {
 
 
   coords_int <- coords %>% 
+    as.data.frame() %>% 
     mutate(voxel = paste(x, y, sep = "_")) %>% 
     filter(voxel %in% unique(hdr_df_pb$voxel))
     # filter(x %in% unique(hdr_df_pb$x) & y %in% unique(hdr_df_pb$y))
@@ -72,7 +73,7 @@ res <- future_lapply(unique(vox_ids),
                          
          hdr_df <- hdr_df_pb %>% 
              # filter(x == xc, y == yc) %>%
-             filter(voxel %in% coords_int$voxel[coords_int$vox_id == ind]) %>% 
+             filter(voxel %in% coords_int$voxel[coords_int$vox_id == ind]) %>% #test ind 676
              select(subject, hdr, time, voxel)
          
          n <- length(unique(hdr_df$time))
@@ -114,15 +115,15 @@ res <- future_lapply(unique(vox_ids),
                            dx = 1*2,
                            nf = n%/%2 + 1,
                            edge_index = edge_index,
-                           mu_rho = log(1000),
+                           mu_rho = log(10000),
                            sigma_rho = .1/sqrt(prod(dim(y_arr)[1:2])),
                            mu_sigma = 0,
                            sigma_sigma = .01,
                            mu_tau = 1,
                            sigma_tau = .1,
                            r = 1,
-                           nut = 2,
-                           nul = 2,
+                           nut = 1,
+                           nul = 1,
                            m = 1,
                            sigma = 3.5)
          fit <- mod$sample(data = stan_data, 
@@ -170,7 +171,7 @@ res <- future_lapply(unique(vox_ids),
 			                        tausig = rep(tau_sigs, 
 			                                     length(un_vox))) %>% 
 			   rowwise() %>% 
-			   mutate(kappa = 1/(1 + prod(dim(y_arr)[2]) * tausig^2 * post^2)) %>% 
+			   mutate(kappa = 1/(1 + prod(dim(y_arr)[1:2]) * tausig^2 * post^2)) %>% 
 			   mutate(param = str_replace(param, 
 			                              "lambda", "kappa")) %>% 
 			   group_by(param) %>% 
@@ -180,7 +181,7 @@ res <- future_lapply(unique(vox_ids),
 			 kappa_df$voxel <- un_vox
 			 
 			 rho_sum <- draws %>% 
-			   select(contains("rho")) %>% 
+			   select(contains("rho[")) %>% 
 			   pivot_longer(1:length(un_vox), 
 			                names_to = "param", values_to = "post") %>% 
 			   group_by(param) %>% 
