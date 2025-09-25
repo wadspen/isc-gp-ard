@@ -282,8 +282,8 @@ res <- future_lapply(unique(vox_ids),
 			 
 			 tau_sum$voxel <- un_vox
 			 
-			 beta_sum <- draws %>% 
-			   select(contains("beta[")) %>% 
+			 phi_sum <- draws %>% 
+			   select(contains("phi[")) %>% 
 			   pivot_longer(1:length(un_vox), 
 			                names_to = "param", values_to = "post") %>% 
 			   group_by(param) %>% 
@@ -291,7 +291,7 @@ res <- future_lapply(unique(vox_ids),
 			             sd = sd(post, na.rm = TRUE))
 			 
 			 
-			 beta_sum$voxel <- un_vox
+			 phi_sum$voxel <- un_vox
 			 
 			 sigma_sum <- data.frame(param = "sigma", m = mean(draws$sigma, na.rm = TRUE), 
 			                         sd = sd(draws$sigma, na.rm = TRUE), 
