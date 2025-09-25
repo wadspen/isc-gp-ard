@@ -17,7 +17,7 @@ library(abind)
 data_loc <- "../../dme_files/"
 
 
-mod <- cmdstan_model("../stan_models/mc_nngp_hs.stan", 
+mod <- cmdstan_model("../stan_models/mc_nngp_irho.stan", 
                      include_paths = gptools_include_path())
 subjects <- as.character(1:22)
 subjects <- ifelse(nchar(subjects) == 1, paste0(0, subjects), subjects)
@@ -132,7 +132,7 @@ for (v in 1:3) {
   #coords_int <- coords_int[sample(nrow(coords_int), 36, replace = FALSE),]
   
   
-  vox_ids <- ceiling(seq_along(voxels)/ 10)
+  vox_ids <- ceiling(seq_along(voxels)/ 1)
   coords_int$vox_id <- vox_ids
   
   
@@ -194,15 +194,15 @@ res <- future_lapply(unique(vox_ids),
                            dx = 1*2,
                            nf = n%/%2 + 1,
                            edge_index = edge_index,
-                           mu_rho = log(1000),
+                           mu_rho = log(10000),
                            sigma_rho = .1/sqrt(prod(dim(y_arr)[1:2])),
                            mu_sigma = 0,
                            sigma_sigma = .01,
                            mu_tau = 1,
                            sigma_tau = .1,
                            r = 1,
-                           nut = 20,
-                           nul = 20,
+                           nut = 1,
+                           nul = 1,
                            m = 1,
                            sigma = 3.5)
          fit <- mod$sample(data = stan_data, 
@@ -250,7 +250,7 @@ res <- future_lapply(unique(vox_ids),
 			                        tausig = rep(tau_sigs, 
 			                                     length(un_vox))) %>% 
 			   rowwise() %>% 
-			   mutate(kappa = 1/(1 + prod(dim(y_arr)[2]) * tausig^2 * post^2)) %>% 
+			   mutate(kappa = 1/(1 + prod(dim(y_arr)[1:2]) * tausig^2 * post^2)) %>% 
 			   mutate(param = str_replace(param, 
 			                              "lambda", "kappa")) %>% 
 			   group_by(param) %>% 
@@ -260,7 +260,7 @@ res <- future_lapply(unique(vox_ids),
 			 kappa_df$voxel <- un_vox
 			 
 			 rho_sum <- draws %>% 
-			   select(contains("rho")) %>% 
+			   select(contains("rho[")) %>% 
 			   pivot_longer(1:length(un_vox), 
 			                names_to = "param", values_to = "post") %>% 
 			   group_by(param) %>% 
@@ -307,4 +307,4 @@ res <- future_lapply(unique(vox_ids),
 
 }
 
-saveRDS(param_means_all, "./test_means_hs2.rds")
+saveRDS(param_means_all, "./test_means_irho.rds")
