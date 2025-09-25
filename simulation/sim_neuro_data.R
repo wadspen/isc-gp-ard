@@ -87,7 +87,7 @@ for (i in 1:length(subjects)) {
   sub_data[[i]] <- simVOLfmri(design=design, image=spatial,
                               base=0, SNR=.3, noise="spatial", type="rician",
                               rho.temp=c(0.142,0.108,0.084), rho.spat=0.4,
-                              w=c(0.05,0.1,0.01,0.09,0.05,0.7), dim=c(53,63),
+                              w=c(0.05,0.1,0.01,0.09,0.05,0.7), dim=c(53,31),
                               # template=baseline.bin,
                               spat="gaussRF")
   
