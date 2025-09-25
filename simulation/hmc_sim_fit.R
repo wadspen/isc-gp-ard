@@ -34,7 +34,7 @@ for (v in 1:3) {
   end   <- v * vs
   
   hdr_df_pb <- hdr_df_ab %>% 
-    filter(between(c, start, end)) %>% 
+    filter(between(x, start, end)) %>% 
     mutate(voxel = paste(x, y, sep = "_"))
 
 
