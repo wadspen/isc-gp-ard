@@ -282,11 +282,22 @@ res <- future_lapply(unique(vox_ids),
 			 
 			 tau_sum$voxel <- un_vox
 			 
+			 beta_sum <- draws %>% 
+			   select(contains("beta[")) %>% 
+			   pivot_longer(1:length(un_vox), 
+			                names_to = "param", values_to = "post") %>% 
+			   group_by(param) %>% 
+			   summarise(m = mean(post, na.rm = TRUE),
+			             sd = sd(post, na.rm = TRUE))
+			 
+			 
+			 beta_sum$voxel <- un_vox
+			 
 			 sigma_sum <- data.frame(param = "sigma", m = mean(draws$sigma, na.rm = TRUE), 
 			                         sd = sd(draws$sigma, na.rm = TRUE), 
 			                         voxel = un_vox)
 			 
-			 param_sums <- rbind(rho_sum, tau_sum, sigma_sum, kappa_df)
+			 param_sums <- rbind(rho_sum, tau_sum, sigma_sum, kappa_df, beta_sum)
 			 
 			 fin_preds <- preds_df %>% 
 			   left_join(param_sums, by = "voxel")
