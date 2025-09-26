@@ -118,29 +118,29 @@ hdr_df_ab <- hdr_df_ab %>%
   group_by(participant_id, x, y) %>%
   mutate(hdr = as.numeric(scale(hdr, center = TRUE, scale = TRUE))) %>%
   ungroup() %>%
-  filter(!is.na(hdr))
+  filter(!is.na(hdr)) %>% 
+  mutate(voxel = paste(x, y, sep = "_"))
 
-  hdr_df_pb <- hdr_df_ab %>% 
-    mutate(voxel = paste(x, y, sep = "_")) %>% 
-    left_join(atlas_df %>% 
-                filter(z == 27) %>% 
-                dplyr::select(-z), by = c("x", "y")) %>% 
-    filter(roi != 0)
+select_vox <- hdr_df_ab %>% 
+  select(participant_id, voxel) %>% 
+  unique() %>% 
+  group_by(voxel) %>% 
+  summarise(n = n()) %>% 
+  filter(n == 22)
+
+hdr_df_pb <- hdr_df_ab %>% 
+  filter(voxel %in% select_vox$voxel) %>% 
+  left_join(atlas_df %>% 
+            filter(z == 27) %>% 
+            dplyr::select(-z), by = c("x", "y")) %>% 
+  filter(roi != 0)
   
 rois <- unique(hdr_df_pb$roi) 
   
-hdr_df_pb %>% 
-  select(voxel, roi) %>% 
-  unique() %>% 
-  group_by(roi) %>% 
-  summarise(n = n()) %>% 
-  filter(n == 2)
-  arrange(n)
 
-rois <- c(64, 92, 140, 171, 212, 397) 
   
 
-plan(multisession, workers = 6)  # Windows-friendly
+plan(multisession, workers = min(length(rois) + 4, 120))  # Windows-friendly
 res <- future_lapply(rois,
                        
                        function(ind) {
