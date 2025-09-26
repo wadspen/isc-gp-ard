@@ -17,7 +17,7 @@ library(abind)
 data_loc <- "../../dme_files/"
 
 
-mod <- cmdstan_model("../stan_models/mc_nngp_irho.stan", 
+mod <- cmdstan_model("../stan_models/mc_nngp_trho_spat.stan", 
                      include_paths = gptools_include_path())
 subjects <- as.character(1:22)
 subjects <- ifelse(nchar(subjects) == 1, paste0(0, subjects), subjects)
@@ -201,8 +201,8 @@ res <- future_lapply(unique(vox_ids),
                            mu_tau = 1,
                            sigma_tau = .1,
                            r = 1,
-                           nut = 1,
-                           nul = 1,
+                           nut = 1000,
+                           nul = 1000,
                            m = 1,
                            sigma = 3.5)
          fit <- mod$sample(data = stan_data, 
@@ -297,7 +297,7 @@ res <- future_lapply(unique(vox_ids),
 			                         sd = sd(draws$sigma, na.rm = TRUE), 
 			                         voxel = un_vox)
 			 
-			 param_sums <- rbind(rho_sum, tau_sum, sigma_sum, kappa_df, beta_sum)
+			 param_sums <- rbind(rho_sum, tau_sum, sigma_sum, kappa_df, phi_sum)
 			 
 			 fin_preds <- preds_df %>% 
 			   left_join(param_sums, by = "voxel")
@@ -318,4 +318,4 @@ res <- future_lapply(unique(vox_ids),
 
 }
 
-saveRDS(param_means_all, "./test_means_irho.rds")
+saveRDS(param_means_all, "./test_means_trho_spat.rds")
