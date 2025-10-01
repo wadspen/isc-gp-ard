@@ -243,8 +243,8 @@ res <- future_lapply(rois,
                     mu_tau = 1,
                     sigma_tau = .1,
                     r = 1,
-                    nut = 1,
-                    nul = 1,
+                    nut = 1000,
+                    nul = 1000,
                     m = 1,
                     node1 = as.integer(edges$id.a),
                     node2 = as.integer(edges$id.b))
@@ -327,4 +327,4 @@ res <- future_lapply(rois,
 
 
 param_means <- do.call(rbind, res)
-saveRDS(param_means, "./spat_res_all_cauchy.rds")
+saveRDS(param_means, "./spat_res_all_norm.rds")
