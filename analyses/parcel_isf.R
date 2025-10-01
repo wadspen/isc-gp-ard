@@ -237,22 +237,22 @@ res <- future_lapply(rois,
                     nf = n%/%2 + 1,
                     edge_index = edge_index,
                     mu_rho = log(10000),
-                    sigma_rho = .1/sqrt(prod(dim(y_arr)[1:2])),
+                    sigma_rho = .1/sqrt(prod(dim(y_arr)[1:3])),
                     mu_sigma = 0,
                     sigma_sigma = .01,
                     mu_tau = 1,
                     sigma_tau = .1,
                     r = 1,
-                    nut = 2000,
-                    nul = 2000,
+                    nut = 1,
+                    nul = 1,
                     m = 1,
                     node1 = as.integer(edges$id.a),
                     node2 = as.integer(edges$id.b))
   fit <- mod$sample(data = stan_data, 
                     chains = 1, 
                    # parallel_chains = 4,
-                    iter_warmup = 50, 
-                    iter_sampling = 50)
+                    iter_warmup = 1000, 
+                    iter_sampling = 1000)
                            
                            
   draws <- fit$draws(format = "df")
@@ -367,4 +367,4 @@ res <- future_lapply(rois,
 
 
 param_means <- do.call(rbind, res)
-saveRDS(param_means, "./spat_res.rds")
+saveRDS(param_means, "./spat_res_all_cauchy.rds")
