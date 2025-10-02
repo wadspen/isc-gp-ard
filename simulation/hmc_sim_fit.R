@@ -59,7 +59,7 @@ for (v in 1:3) {
   
   print(paste0("Iteration ", v, " of ", 3, " with ",
               dim(coords_int)[1], " voxels."))
-  plan(multisession, workers = 4)  # Windows-friendly
+  plan(multisession, workers = 120)  # Windows-friendly
 
 # coords_int <- expand.grid(1:7, 1:5, 1)
 res <- future_lapply(unique(vox_ids),
