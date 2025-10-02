@@ -123,7 +123,7 @@ res <- future_lapply(unique(vox_ids),
                            sigma_tau = .1,
                            r = 1,
                            nut = 1000,
-                           nul = 1000,
+                           nul = 2,
                            m = 1,
                            sigma = 3.5)
          fit <- mod$sample(data = stan_data, 
@@ -228,4 +228,4 @@ res <- future_lapply(unique(vox_ids),
 
 }
 
-saveRDS(param_means_all, "./test_means_sim_hs_norm.rds")
+saveRDS(param_means_all, "./test_means_sim_hs_norm_t.rds")
