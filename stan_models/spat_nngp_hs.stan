@@ -5,7 +5,8 @@ functions {
 }
 
 data {
-  int<lower=1> N;                    // number of grid points
+  int<lower=1> N;                    // number of grid points time
+  int<lower=1> M;                    // number of grid points space
   int<lower=0> n_edges;              // number of edges on spatial domain
   int<lower=1> S;                    // number of subjects
   int<lower=1> C;                    // number of channels / parcels
@@ -56,7 +57,7 @@ transformed parameters {
 model {
   // Priors
   target += -0.5 * dot_self(alpha[node1] - alpha[node2]);
-  sum(alpha) ~ double_exponential(0, 0.01 * N);
+  sum(alpha) ~ double_exponential(0, 0.01 * M);
   tau_sigma_rho ~ student_t(nut, 0, sigma_rho);
   lambda ~ student_t(nul, 0, phi);
   // lambda ~ cauchy(0, m);
