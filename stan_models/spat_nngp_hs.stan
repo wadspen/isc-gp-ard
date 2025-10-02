@@ -56,8 +56,8 @@ transformed parameters {
 model {
   // Priors
   target += -0.5 * dot_self(alpha[node1] - alpha[node2]);
-  sum(alpha) ~ normal(0, 0.01 * N);
-  tau_sigma_rho ~ student_t(nut, 0,sigma_rho);
+  sum(alpha) ~ double_exponential(0, 0.01 * N);
+  tau_sigma_rho ~ student_t(nut, 0, sigma_rho);
   lambda ~ student_t(nul, 0, phi);
   // lambda ~ cauchy(0, m);
   // sigma ~ normal(mu_sigma, sigma_sigma);
