@@ -8,4 +8,4 @@
 module purge
 module load gsl/2.8 udunits/2.2.28-gcc14.2 cuda/11.6 freetype/2.12.1 gdal/3.9.2 r/4.4.2 proj geos cmake
 #
-Rscript ./mc_hmc_isc.R
+Rscript ./parcel_isf2.R
