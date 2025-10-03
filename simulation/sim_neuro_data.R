@@ -69,8 +69,8 @@ for (i in 1:length(subjects)) {
   # region.2.d <- list( -0.24, 10.29, 80.18, 160.24)
   # region.3.d <- list(192.7, 50.04, 240.60, 50.83)
   
-  region.1a.d <- as.list(rnorm(4, .75, .5))
-  region.1b.d <- as.list(rnorm(4, .6, .5))
+  region.1a.d <- as.list(rnorm(4, 1.75, .2))
+  region.1b.d <- as.list(rnorm(4, 1.2, .21))
   # region.1c.d <- as.list(rnorm(4, 1.5, .5))
   # region.2.d <- as.list(rnorm(4, 1.5, .5))
   # region.3.d <- as.list(rnorm(4, 1.5, .5))
