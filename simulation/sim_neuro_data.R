@@ -6,7 +6,7 @@ library(stringr)
 library(tidyr)
 library(MASS)
 
-set.seed(14)
+set.seed(15)
 nscan <- 250
 TR <- 2
 total.time <- nscan*TR
