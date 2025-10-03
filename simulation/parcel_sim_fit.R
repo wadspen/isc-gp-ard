@@ -55,15 +55,15 @@ hdr_df_ab <- hdr_sim %>%
   filter(time < 51)
 
   
-  hdr_df_pb <- hdr_df_ab %>% 
-    mutate(voxel = paste(x, y, sep = "_")) %>% 
-    left_join(parc_df, by = c("x", "y"))
-  
-  rois <- unique(hdr_df_pb$roi) 
-  
-  
-  plan(multisession, workers = min(length(rois) + 4, 120))  # Windows-friendly
-  
+hdr_df_pb <- hdr_df_ab %>% 
+  mutate(voxel = paste(x, y, sep = "_")) %>% 
+  left_join(parc_df, by = c("x", "y"))
+
+rois <- unique(hdr_df_pb$roi) 
+
+
+plan(multisession, workers = min(length(roi) + 4, 120))  # Windows-friendly
+res <- future_lapply(rois,  
   function(ind) {
     tryCatch({  
   
@@ -245,7 +245,8 @@ hdr_df_ab <- hdr_sim %>%
                            message(sprintf("Error in iteration %d: %s", ind, e$message))
                            return(NULL)   # or NULL, or some sentinel value
                          })
-                       })
+  })
+ 
   param_means <- do.call(rbind, res)
   
 
