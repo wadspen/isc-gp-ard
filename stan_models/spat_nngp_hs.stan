@@ -23,8 +23,8 @@ data {
   real<lower=0> nut;
   real<lower=0> nul;
   real<lower=0> m;
-  array[n_edges] int<lower=1, upper=N> node1; // node1[i] adjacent to node2[i]
-  array[n_edges] int<lower=1, upper=N> node2; // and node1[i] < node2[i]
+  array[n_edges] int<lower=1, upper=M> node1; // node1[i] adjacent to node2[i]
+  array[n_edges] int<lower=1, upper=M> node2; // and node1[i] < node2[i]
 }
 
 parameters {
