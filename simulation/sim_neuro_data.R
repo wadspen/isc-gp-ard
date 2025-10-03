@@ -4,6 +4,7 @@ library(ggplot2)
 library(dplyr)
 library(stringr)
 library(tidyr)
+library(MASS)
 
 set.seed(14)
 nscan <- 250
@@ -69,8 +70,8 @@ for (i in 1:length(subjects)) {
   # region.2.d <- list( -0.24, 10.29, 80.18, 160.24)
   # region.3.d <- list(192.7, 50.04, 240.60, 50.83)
   
-  region.1a.d <- as.list(rnorm(4, 1.75, .2))
-  region.1b.d <- as.list(rnorm(4, 1.2, .21))
+  region.1a.d <- as.list(rnorm(4, 2.4, .2))
+  region.1b.d <- as.list(rnorm(4, 1.7, .21))
   # region.1c.d <- as.list(rnorm(4, 1.5, .5))
   # region.2.d <- as.list(rnorm(4, 1.5, .5))
   # region.3.d <- as.list(rnorm(4, 1.5, .5))
@@ -86,11 +87,19 @@ for (i in 1:length(subjects)) {
                             effectsize=effect)
   spatial <- simprepSpatial(regions=2,
                             coord=coord.regions, radius=radius.regions,
-                            form="sphere", fading=0.05)
+                            form="sphere", fading=0.1)
+  
+  temp <- mvrnorm(1, 
+          c(0.142,0.108,0.084),
+          diag(rep(.03, 3)))
   sub_data[[i]] <- simVOLfmri(design=design, image=spatial,
-                              base=0, SNR=.3, noise="spatial", type="rician",
-                              rho.temp=c(0.142,0.108,0.084), rho.spat=0.4,
-                              w=c(0.05,0.1,0.01,0.09,0.05,0.7), dim=c(53,31),
+                              base=0, SNR=.5, 
+                              noise="mixture", 
+                              type="rician",
+                              rho.temp=temp,
+                              rho.spat=abs(rnorm(1, 0.4,.1)),
+                              w=c(0.05,0.1,0.01,0.09,0.05,0.7), 
+                              dim=c(53,31),
                               # template=baseline.bin,
                               spat="gaussRF")
   
