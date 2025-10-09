@@ -6,7 +6,7 @@ library(stringr)
 library(tidyr)
 library(MASS)
 
-set.seed(15)
+set.seed(16)
 nscan <- 250
 TR <- 2
 total.time <- nscan*TR
@@ -129,26 +129,12 @@ for (i in 1:length(subjects)) {
 
 saveRDS(hdr_sim, "init_sims.rds")
 
+
 coords <- df_long %>% 
-  select(x,y) %>% 
+  dplyr::select(x,y) %>% 
   unique()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+print("yourmom goes to college")
 
 
 
