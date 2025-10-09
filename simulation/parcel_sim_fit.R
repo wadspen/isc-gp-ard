@@ -62,7 +62,7 @@ hdr_df_pb <- hdr_df_ab %>%
 rois <- unique(hdr_df_pb$roi) 
 
 
-plan(multisession, workers = min(length(roi) + 4, 120))  # Windows-friendly
+plan(multisession, workers = min(length(rois) + 4, 120))  # Windows-friendly
 res <- future_lapply(rois,  
   function(ind) {
     tryCatch({  
@@ -163,8 +163,8 @@ res <- future_lapply(rois,
                         mu_tau = 1,
                         sigma_tau = .1,
                         r = 1,
-                        nut = 3000,
-                        nul = 3,
+                        nut = 1000,
+                        nul = 1000,
                         m = 1,
                         node1 = as.integer(edges$id.a),
                         node2 = as.integer(edges$id.b))
@@ -251,4 +251,4 @@ res <- future_lapply(rois,
   
 
 
-saveRDS(param_means_all, "./spat_parc_sim.rds")
+saveRDS(param_means, "./spat_parc_sim_norm_norm.rds")

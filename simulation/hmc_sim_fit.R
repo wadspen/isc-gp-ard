@@ -74,7 +74,7 @@ res <- future_lapply(unique(vox_ids),
          hdr_df <- hdr_df_pb %>% 
              # filter(x == xc, y == yc) %>%
              filter(voxel %in% coords_int$voxel[coords_int$vox_id == ind]) %>% #test ind 676
-             select(subject, hdr, time, voxel)
+             dplyr::select(subject, hdr, time, voxel)
          
          n <- length(unique(hdr_df$time))
          x <- unique(hdr_df$time)
@@ -85,7 +85,7 @@ res <- future_lapply(unique(vox_ids),
 # 		     y_dat <- hdr_df %>%
 #   				 pivot_wider(time, names_from = participant_id, 
 #   				             values_from = hdr) %>%
-#   				 select(-time) %>%
+#   				 dplyr::select(-time) %>%
 #   				 t() %>%
 #   				 as.matrix()
          
@@ -93,11 +93,11 @@ res <- future_lapply(unique(vox_ids),
          for (i in 1:length(un_vox)) {
            y_dat <- hdr_df %>% 
              filter(voxel == un_vox[i]) %>% 
-             # select(-time) %>% 
+             # dplyr::select(-time) %>% 
              # mutate(subject = paste("sub", subject, sep = "-")) %>% 
              pivot_wider(id_cols = time, names_from = subject, 
                          values_from = hdr) %>% 
-             select(-time) %>% 
+             dplyr::select(-time) %>% 
              t() %>% 
              as.matrix()
            # print(dim(y_dat))
@@ -123,7 +123,7 @@ res <- future_lapply(unique(vox_ids),
                            sigma_tau = .1,
                            r = 1,
                            nut = 1000,
-                           nul = 2,
+                           nul = 3,
                            m = 1,
                            sigma = 3.5)
          fit <- mod$sample(data = stan_data, 
@@ -138,7 +138,7 @@ res <- future_lapply(unique(vox_ids),
 			 preds_df <- data.frame()
 			 for (i in 1:length(un_vox)) {
 			   drawszf <- draws %>% 
-			     select(contains("f[") & contains(paste0(",",i,"]")))
+			     dplyr::select(contains("f[") & contains(paste0(",",i,"]")))
 			   
 			   preds <- apply(drawszf, MARGIN = 2, FUN = mean)
 			   upp <- apply(drawszf, MARGIN = 2, FUN = quantile, probs = .975)
@@ -156,12 +156,12 @@ res <- future_lapply(unique(vox_ids),
 			 rownames(preds_df) <- 1:nrow(preds_df)
 			 
 			 tau_sigs <- draws %>% 
-			   select(contains("tau_sig")) %>% 
+			   dplyr::select(contains("tau_sig")) %>% 
 			   as.matrix() %>% 
 			   as.numeric()
 			 
 			 lambdas <- draws %>% 
-			   select(contains("lambda")) %>% 
+			   dplyr::select(contains("lambda")) %>% 
 			   pivot_longer(1:length(un_vox),
 			                names_to = "param",
 			                values_to = "post")
@@ -181,7 +181,7 @@ res <- future_lapply(unique(vox_ids),
 			 kappa_df$voxel <- un_vox
 			 
 			 rho_sum <- draws %>% 
-			   select(contains("rho[")) %>% 
+			   dplyr::select(contains("rho[")) %>% 
 			   pivot_longer(1:length(un_vox), 
 			                names_to = "param", values_to = "post") %>% 
 			   group_by(param) %>% 
@@ -193,7 +193,7 @@ res <- future_lapply(unique(vox_ids),
 			 
 			 
 			 tau_sum <- draws %>% 
-			   select(contains("tau"), !contains("sigma_rho")) %>% 
+			   dplyr::select(contains("tau"), !contains("sigma_rho")) %>% 
 			   pivot_longer(1:length(un_vox), 
 			                names_to = "param", values_to = "post") %>% 
 			   group_by(param) %>% 
@@ -228,4 +228,4 @@ res <- future_lapply(unique(vox_ids),
 
 }
 
-saveRDS(param_means_all, "./test_means_sim_hs_norm_t.rds")
+saveRDS(param_means_all, "./test_means_sim_hs_norm_t_strong.rds")
