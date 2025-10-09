@@ -76,7 +76,7 @@ res <- future_lapply(1:M,
         # boot_subs <- boot_samps[[m]]
        perm_est_zcor <- matrix(NA, nrow = 53, ncol = 31)
        library(schoolmath)
-        for (c in cs) { #nrow(coords)) {
+        for (c in 1:nrow(coords)) {
           x <- coords[c, 1]; y <- coords[c, 2]
           sub_cor <- matrix(NA, nrow = length(subjects), 
                             ncol = length(subjects))  
