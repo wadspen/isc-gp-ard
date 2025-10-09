@@ -65,7 +65,7 @@ boot_zcor <- array(NA, dim = c(53, 31, M))
 #3, 13; 639
 # cs <- which(coords[,1] %in% 8:18 & coords[,2] == 13)
 
-plan(multisession, workers = min(12, 120))
+plan(multisession, workers = 120)
 
 # for (m in 1:M) {
 res <- future_lapply(1:M,
