@@ -229,7 +229,7 @@ res <- future_lapply(rois,
   edge_index <- rbind(1:(ncol(y_dat) - 1), 2:ncol(y_dat))
                            
   stan_data <- list(N = n, M = length(un_vox),
-                    S = nrow(y_dat), 
+		    S = nrow(y_dat), 
                     n_edges = nrow(edges),
                     C = length(unique(hdr_df$voxel)),
                     y = y_arr,
@@ -328,4 +328,4 @@ res <- future_lapply(rois,
 
 
 param_means <- do.call(rbind, res)
-saveRDS(param_means, "./spat_res_all_norm.rds")
+saveRDS(param_means, "./spat_la_m_res_all_norm_t.rds")

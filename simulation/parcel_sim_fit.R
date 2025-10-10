@@ -14,7 +14,7 @@ library(stringr)
 library(future.apply)
 library(abind)
 #library(INLA)
-
+start <- Sys.time()
 a <- max(unique(hdr_sim$x))
 b <- max(unique(hdr_sim$y))
 parc_df <- expand.grid(x = 1:a, y = 1:b)
@@ -22,9 +22,9 @@ parc_df <- expand.grid(x = 1:a, y = 1:b)
 # Break into 3 bins along y, 4 bins along x
 parc_df <- parc_df %>%
   mutate(
-    xbin = cut(x, breaks = 6, labels = FALSE),
-    ybin = cut(y, breaks = 5, labels = FALSE),
-    roi = (ybin - 1) * 6 + xbin   # region index 1–12
+    xbin = cut(x, breaks = 2, labels = FALSE),
+    ybin = cut(y, breaks = 2, labels = FALSE),
+    roi = (ybin - 1) * 2 + xbin   # region index 1–12
   ) %>% 
   dplyr::select(-xbin, -ybin)
 
@@ -251,4 +251,6 @@ res <- future_lapply(rois,
   
 
 
-saveRDS(param_means, "./spat_parc_sim_norm_norm.rds")
+saveRDS(param_means, "./spat_2_2_parc_sim_norm_norm.rds")
+end <- Sys.time()
+print(end - start)
