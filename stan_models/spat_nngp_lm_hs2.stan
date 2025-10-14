@@ -59,7 +59,7 @@ transformed parameters {
 model {
   // Priors
   target += -0.5 * dot_self(alpha[node1] - alpha[node2]);
-  sum(alpha) ~ double_exponential(0, 0.01 * M);
+  sum(alpha) ~ normal(0, 0.01 * M);
   // alpha ~ normal(0, tau_sigma_rho .* lambda);
   tau_sigma_rho ~ student_t(nut, 0, sigma_rho);
   lambda ~ student_t(nul, 0, phi);
@@ -83,12 +83,24 @@ model {
   // }
 
   // Likelihood: vectorized over subjects
+  
+  // for (c in 1:C) {
+  //   matrix[S, N] y_c = to_matrix(y[, , c]);
+  //   to_vector(y_c) ~ normal(rep_vector(beta[c], S * N) .* rep_vector(f, S), tau[c]);
+  // }
+  
   for (c in 1:C) {
     for (s in 1:S) {
-      for (n in 1:N) {
-      // elementwise independent normal
-        y[s,n,c] ~ normal(beta[c] * f[n], tau);
-      }
+      y[s, , c] ~ normal(beta[c] * f, tau[c]);
     }
   }
+  
+  // for (c in 1:C) {
+  //   for (s in 1:S) {
+  //     for (n in 1:N) {
+  //     // elementwise independent normal
+  //       y[s,n,c] ~ normal(beta[c] * f[n], tau[c]);
+  //     }
+  //   }
+  // }
 }
