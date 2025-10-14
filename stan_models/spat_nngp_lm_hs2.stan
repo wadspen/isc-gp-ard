@@ -35,7 +35,7 @@ parameters {
   vector[N] f;                     // latent GP per channel
   real<lower=0> tau_sigma_rho;
   vector[C] alpha;
-  vector[C] beta;
+  vector<lower=0>[C] beta;
 }
 
 transformed parameters {
