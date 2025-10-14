@@ -192,7 +192,7 @@ res <- future_lapply(rois,
        preds_df <- data.frame()
        for (i in 1:length(un_vox)) {
          drawszf <- draws %>% 
-           dplyr::select(contains("f[") & contains(paste0(",",i,"]")))
+           dplyr::select(contains("f"))
          
          preds <- apply(drawszf, MARGIN = 2, FUN = mean)
          upp <- apply(drawszf, MARGIN = 2, FUN = quantile, probs = .975)
@@ -210,20 +210,21 @@ res <- future_lapply(rois,
        rownames(preds_df) <- 1:nrow(preds_df)
        
        params <- draws %>% 
-         dplyr::select(!contains("f")) %>%  
+         dplyr::select(!contains("f") & !contains("beta")) %>%  
          mutate(draw = row_number())
        
        par_long <- params %>% 
          pivot_longer(-"draw", names_to = "param", values_to = "val") %>% 
          mutate(vox_num = as.numeric(str_extract(param, "\\d+"))) %>% 
-         mutate(param = str_replace(param, "\\[\\d+\\]", ""))
+         mutate(param = str_replace(param, "\\[\\d+\\]", "")) 
        
        voxels <- data.frame(vox_num = 1:length(un_vox), voxel = un_vox)
        
        par_wide <- par_long %>% 
          left_join(voxels, by = "vox_num") %>% 
          pivot_wider(names_from = param, values_from = val) %>% 
-         mutate(n = prod(dim(y_arr)[1:3])) 
+         mutate(n = prod(dim(y_arr)[1:3])) %>% 
+         filter(!is.na(voxel))
        
        par_wide$tau_sigma_rho <- rep(draws$tau_sigma_rho, length(un_vox))
        par_wide$rho <- rep(draws$rho, length(un_vox))
