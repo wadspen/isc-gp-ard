@@ -48,9 +48,9 @@ est_cor <- matrix(NA, nrow = max(coords[,"x"]),
 est_zcor <- est_cor
 for (c in 1:nrow(coords)) {
   x <- coords[c, 1]; y <- coords[c, 2];
-  sub_cor <- matrix(NA, nrow = length(subjects), ncol = length(subjects))  
-  for (i in 1:length(subjects)) {
-    for (j in i:length(subjects)) {
+  sub_cor <- matrix(NA, nrow = length(all_bold), ncol = length(all_bold))  
+  for (i in 1:length(all_bold)) {
+    for (j in i:length(all_bold)) {
       sub_cor[i,j] <- as.numeric(cor(scale(all_bold27[[i]][x,y,1:50]), 
                                      scale(all_bold27[[j]][x,y,1:50])))
       sub_cor[j,i] <- sub_cor[i,j]
@@ -90,10 +90,10 @@ res <- future_lapply(1:M,
                          library(schoolmath)
                          for (c in 1:nrow(coords)) {
                            x <- coords[c, 1]; y <- coords[c, 2]
-                           sub_cor <- matrix(NA, nrow = length(subjects), 
-                                             ncol = length(subjects))  
-                           for (i in 1:length(subjects)) {
-                             for (j in 1:length(subjects)) {
+                           sub_cor <- matrix(NA, nrow = length(all_bold27), 
+                                             ncol = length(all_bold27))  
+                           for (i in 1:length(all_bold27)) {
+                             for (j in 1:length(all_bold27)) {
                                ts1 <- as.numeric(scale(all_bold27[[i]][x,y,1:50]))
                                ts2 <- as.numeric(scale(all_bold27[[j]][x,y,1:50]))
                                ts1 <- data.table::shift(ts1,
