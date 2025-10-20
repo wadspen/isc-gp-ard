@@ -87,7 +87,7 @@ get_shared_coords <- function(all_bold, subs = 1:22) {
     summarise(n_groups = n_distinct(sub), .groups = "drop") %>%
     filter(n_groups == n_distinct(all_coords$sub)) %>% 
     filter(dim3 == 27) %>% 
-    select(-n_groups)
+    dplyr::select(-n_groups)
   
   colnames(coords_int_full) <- c("x", "y", "z")
   return(coords_int_full)
@@ -134,7 +134,7 @@ get_hdr_df_pb <- function(all_bold, atlas_df, max_time = 50, subs = 1:22,
     mutate(voxel = paste(x, y, sep = "_"))
   
   select_vox <- hdr_df_ab %>% 
-    select(participant_id, voxel) %>% 
+    dplyr::select(participant_id, voxel) %>% 
     unique() %>% 
     group_by(voxel) %>% 
     summarise(n = n()) %>% 
@@ -151,19 +151,19 @@ get_hdr_df_pb <- function(all_bold, atlas_df, max_time = 50, subs = 1:22,
 
 get_stan_data <- function(hdr_df_pb, ind) {
   edge_df <- hdr_df_pb %>%
-    select(x, y) %>% 
+    dplyr::select(x, y) %>% 
     unique() %>% 
     mutate(id = row_number(), voxel = paste(x, y, sep = "_"))
   
   edges_x <- edge_df %>% 
     inner_join(edge_df, by = "x", suffix = c(".a", ".b")) %>%
     filter(id.a < id.b) %>%
-    select(id.a, id.b)
+    dplyr::select(id.a, id.b)
   
   edges_y <- edge_df %>%
     inner_join(edge_df, by = "y", suffix = c(".a", ".b")) %>%
     filter(id.a < id.b) %>%
-    select(id.a, id.b)
+    dplyr::select(id.a, id.b)
   
   edges <- bind_rows(edges_x, edges_y) %>% distinct()
   
@@ -171,7 +171,7 @@ get_stan_data <- function(hdr_df_pb, ind) {
     inner_join(edge_df, by = character(), suffix = c(".a", ".b")) %>%
     filter(id.a < id.b) %>%
     filter(abs(x.a - x.b) + abs(y.a - y.b) == 1) %>%
-    select(id.a, id.b)
+    dplyr::select(id.a, id.b)
   
   
   
@@ -184,10 +184,10 @@ get_stan_data <- function(hdr_df_pb, ind) {
   
   hdr_df <- hdr_df_pb %>%
     filter(roi == ind) %>% 
-    select(participant_id, hdr, time, x, y, voxel)
+    dplyr::select(participant_id, hdr, time, x, y, voxel)
   
   edge_df <- hdr_df %>%
-    select(x, y) %>% 
+    dplyr::select(x, y) %>% 
     unique() %>% 
     mutate(id = row_number(), 
            voxel = paste(x, y, sep = "_"))
@@ -197,7 +197,7 @@ get_stan_data <- function(hdr_df_pb, ind) {
     inner_join(edge_df, by = character(), suffix = c(".a", ".b")) %>%
     filter(id.a < id.b) %>%
     filter(abs(x.a - x.b) + abs(y.a - y.b) == 1) %>%
-    select(id.a, id.b)
+    dplyr::select(id.a, id.b)
   
   
   
@@ -221,7 +221,7 @@ get_stan_data <- function(hdr_df_pb, ind) {
       filter(voxel == un_vox[i]) %>% 
       pivot_wider(id_cols = time, names_from = participant_id, 
                   values_from = hdr) %>% 
-      select(-time) %>% 
+      dplyr::select(-time) %>% 
       t() %>% 
       as.matrix()
     y_dat_list[[i]] <- y_dat
@@ -265,7 +265,7 @@ get_results <- function(fit, stan_data) {
   preds_df <- data.frame()
   for (i in 1:length(un_vox)) {
     drawszf <- draws %>% 
-      select(contains("pred_res") &
+      dplyr::select(contains("pred_res") &
                contains(paste0("[",i,",")))
     
     preds <- apply(drawszf, MARGIN = 2, 
@@ -291,8 +291,8 @@ get_results <- function(fit, stan_data) {
   rownames(preds_df) <- 1:nrow(preds_df)
   
   params <- draws %>% 
-    select(!contains("f[") & !contains("pred_res")) %>% 
-    select(contains("[")) %>% 
+    dplyr::select(!contains("f[") & !contains("pred_res")) %>% 
+    dplyr::select(contains("[")) %>% 
     mutate(draw = row_number()) %>% 
     unique()
   
