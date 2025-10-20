@@ -69,14 +69,14 @@ for (c in 1:nrow(coords)) {
 
 
 
-M <- 4
+M <- 1000
 
 #43, 16; 838
 #20, 24; 1239
 #3, 13; 639
 # cs <- which(coords[,1] %in% 8:18 & coords[,2] == 13)
 
-plan(multisession, workers = 4)
+plan(multisession, workers = 1000)
 
 # for (m in 1:M) {
 res <- future_lapply(1:M,
