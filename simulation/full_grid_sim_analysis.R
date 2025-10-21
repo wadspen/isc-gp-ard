@@ -75,7 +75,7 @@ hdr_df_pb <- hdr_df_ab %>%
 
 rois <- unique(hdr_df_pb$roi) 
 
-
+ind <- unique(rois)
 # plan(multisession, workers = min(length(rois) + 4, 120))  # Windows-friendly
 # res <- future_lapply(rois,  
 #                      function(ind) {
