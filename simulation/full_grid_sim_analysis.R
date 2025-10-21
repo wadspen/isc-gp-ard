@@ -217,7 +217,7 @@ rois <- unique(hdr_df_pb$roi)
                          rownames(preds_df) <- 1:nrow(preds_df)
                          
                          params <- draws %>% 
-                           dplyr::select(!contains("f")) %>%  
+                           dplyr::select(!contains("f") & !contains("pred_res")) %>%  
                            mutate(draw = row_number())
                          
                          par_long <- params %>% 
