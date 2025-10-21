@@ -87,7 +87,7 @@ for (i in 1:length(subjects)) {
                             effectsize=effect)
   spatial <- simprepSpatial(regions=2,
                             coord=coord.regions, radius=radius.regions,
-                            form="sphere", fading=0.1)
+                            form="sphere", fading=0)
   
   temp <- mvrnorm(1, 
           c(0.142,0.108,0.084),
