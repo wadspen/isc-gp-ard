@@ -193,7 +193,7 @@ rois <- unique(hdr_df_pb$roi)
                          fit_end <- Sys.time()       
                          draws <- fit$draws(format = "df")
                          preds_df <- data.frame()
-                         for (i in 207:length(un_vox)) {
+                         # for (i in 207:length(un_vox)) {
                            drawszf <- draws %>% 
                              dplyr::select(contains("f"))
                            
@@ -203,12 +203,16 @@ rois <- unique(hdr_df_pb$roi)
                            
                            # plot(preds~t, type = "l")
                            
-                           pdf <- data.frame(pred = preds, time = unique(hdr_df$time), 
-                                             voxel = un_vox[i])
+                           # pdf <- data.frame(pred = preds, time = unique(hdr_df$time), 
+                           #                   voxel = un_vox[i])
                            
-                           preds_df <- rbind(pdf, preds_df)
-                           print(i)
-                         }
+                           preds_df <- data.frame(preds, 
+                                                  time = unique(hdr_df$time), 
+                                                  voxel = rep(un_vox, each = 50))
+                           
+                           # preds_df <- rbind(pdf, preds_df)
+                         #   print(i)
+                         # }
                          
                          rownames(preds_df) <- 1:nrow(preds_df)
                          
