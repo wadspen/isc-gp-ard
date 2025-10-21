@@ -38,6 +38,7 @@ parc_df <- parc_df %>%
                include.lowest = TRUE),
     roi = (ybin - 1) * 12 + xbin   # region index 1–12
   ) %>%
+  mutate(roi = as.numeric(as.factor(paste(xbin, ybin, sep = "_")))) %>%
   dplyr::select(-xbin, -ybin)
 
 x_breaks <- quantile(parc_df$x, probs = seq(0, 1, length.out = 12))[-c(1,10)]
@@ -58,7 +59,7 @@ ggplot( aes(x, y, fill = factor(roi, levels = sample(rois, length(rois))))) +
 data_loc <- "../../dme_files/"
 
 
-mod <- cmdstan_model("../stan_models/spat_nngp_lm_hs.stan", 
+mod <- cmdstan_model("../stan_models/spat_nngp_lm_hs2.stan", 
                      include_paths = gptools_include_path())
 hdr_df_ab <- hdr_sim %>%
   group_by(subject, x, y) %>%
@@ -176,18 +177,20 @@ res <- future_lapply(rois,
                         mu_tau = 1,
                         sigma_tau = .1,
                         r = 1,
-                        nut = 1,
-                        nul = 1,
+                        nut = 1000,
+                        nul = 1000,
                         m = 1,
                         node1 = as.integer(edges$id.a),
                         node2 = as.integer(edges$id.b))
-      
+       
+       fit_start <- Sys.time()
        fit <- mod$sample(data = stan_data, 
                          chains = 1, 
                          # parallel_chains = 4,
                          iter_warmup = 1000, 
                          iter_sampling = 1000)
-                           
+       
+       fit_end <- Sys.time()       
        draws <- fit$draws(format = "df")
        preds_df <- data.frame()
        for (i in 1:length(un_vox)) {
@@ -210,7 +213,7 @@ res <- future_lapply(rois,
        rownames(preds_df) <- 1:nrow(preds_df)
        
        params <- draws %>% 
-         dplyr::select(!contains("f") & !contains("beta")) %>%  
+         dplyr::select(!contains("f")) %>%  
          mutate(draw = row_number())
        
        par_long <- params %>% 
@@ -223,7 +226,7 @@ res <- future_lapply(rois,
        par_wide <- par_long %>% 
          left_join(voxels, by = "vox_num") %>% 
          pivot_wider(names_from = param, values_from = val) %>% 
-         mutate(n = prod(dim(y_arr)[1:3])) %>% 
+         mutate(n = 22*50*1643) %>% #prod(dim(y_arr)[1:3])) %>% 
          filter(!is.na(voxel))
        
        par_wide$tau_sigma_rho <- rep(draws$tau_sigma_rho, length(un_vox))
@@ -232,7 +235,7 @@ res <- future_lapply(rois,
 
        param_sums <- par_wide %>% 
          rowwise() %>% 
-         mutate(kappa = 1 / (1 + n * lambda^2 * tau_sigma_rho^2 * phi^2
+         mutate(kappa = 1 / (1 + (22*50*1643) * lambda^2 * tau_sigma_rho^2 
                              * 1/(tau^2))) %>% 
          group_by(voxel) %>% 
          summarise(kappa = mean(kappa),
@@ -240,14 +243,16 @@ res <- future_lapply(rois,
                    rho = mean(rho),
                    lambda = mean(lambda), 
                    tau = mean(tau),
-                   alpha = mean(alpha), 
+                   alpha = mean(alpha),
+		   beta = mean(beta), 
                    phi = mean(phi),
                    n = unique(n),
                    tau_sigma_rho = mean(tau_sigma_rho))
        
        
        
-       
+       param_sums$roi <- ind
+       param_sums$fit_time <- as.numeric(difftime(fit_end, fit_start, units = "mins"))
        fin_preds <- preds_df %>% 
          left_join(param_sums, by = "voxel")
        
@@ -267,6 +272,6 @@ res <- future_lapply(rois,
 
 
 saveRDS(param_means, paste0("./spat_bin_wid_", 
-                            bin_wid, "_parc_sim_lm.rds"))
+                            bin_wid, "_parc_sim_n_lm_bound_norm_norm_no_fade.rds"))
 end <- Sys.time()
 print(end - start)
