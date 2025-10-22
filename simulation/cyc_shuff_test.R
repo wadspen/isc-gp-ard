@@ -121,7 +121,7 @@ for (i in 1:53) {
 }
 
 
-saveRDS(sig_map, "./sim_sig_map_cyc.rds")
+saveRDS(sig_map, "./sim_sig_map_cyc_no_fade_white.rds")
 
 
 
