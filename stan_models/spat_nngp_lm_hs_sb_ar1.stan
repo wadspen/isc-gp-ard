@@ -142,13 +142,14 @@ model {
 generated quantities {
   array[C,S] vector[N] mean_res;         // your existing predictions
   array[C,S] vector[N] resid_out;     // store residuals for each subject & channel
-  array[C,S] vector[N] pred_res;
+  array[C] vector[N] pred_res;
+  array[C,S] vector[N] preds_res;
   // for (s in 1:S) {
   for (c in 1:C) {
-    
+    pred_res[c] = beta[c] * f;
 
     for (s in 1:S) {
-      mean_res[c,s] = zeta[s] * beta[c] * f;
+      mean_res[c,s] = zeta[s] * beta[c] * f; 
       vector[N] mu = zeta[s] * beta[c] * f;
       vector[N] resid = to_vector(y[s, , c]) - mu;
       resid_out[c, s] = resid;         // save residuals
@@ -161,7 +162,7 @@ generated quantities {
   // 
   for (c in 1:C) {
     for (s in 1:S) {
-      pred_res[c, s] = mean_res[c,s] + resid_out[c, s];
+      preds_res[c, s] = mean_res[c,s] + resid_out[c, s];
     }
   }
 }
