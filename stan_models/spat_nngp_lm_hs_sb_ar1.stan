@@ -138,6 +138,16 @@ model {
   // }
 }
 
+
+generated quantities {
+  array[C] vector[N] pred_res;
+  for (c in 1:C) {
+    pred_res[c] = beta[c]*f;
+  }
+  
+  
+  
+}
 // generated quantities {
 //   array[C] vector[N] pred_res;
 //   for (c in 1:C) {
