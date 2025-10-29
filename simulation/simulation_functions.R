@@ -588,6 +588,105 @@ get_stan_data <- function(hdr_df) {
   return(stan_data)
 }
 
+get_sgp_fun_dist <- function(draws, hdr_df, un_vox) {
+  predf_draws <- draws %>% 
+    dplyr::select(contains("mean_res["))
+  
+  predf = predf_draws %>% 
+    pivot_longer(everything(), names_to = "index", 
+                 values_to = "draw") %>% 
+    rowwise() %>% 
+    extract(index, into = c("vox_num", "subject", "time"),
+            regex = "\\[(\\d+),(\\d+),(\\d+)\\]", convert = TRUE)
+  
+  predf_sum <- predf %>% 
+    left_join(data.frame(voxel = un_vox, 
+                         vox_num = 1:length(un_vox)),
+              by = "vox_num") %>% 
+    group_by(voxel, time) %>% 
+    summarise(pred = mean(draw),
+              upper = quantile(draw, probs = 0.975),
+              lower = quantile(draw, probs = 0.025))
+  
+  predf_dist <- predf_sum %>% 
+    # group_by(voxel) %>% 
+    # mutate(pred = as.numeric(scale(pred))) %>% 
+    left_join(hdr_df %>% 
+                dplyr::select(voxel, time, hdr_conv), 
+              by = c("voxel", "time")) %>% 
+    dplyr::select(-upper, -lower) %>% 
+    group_by(voxel, time) %>% 
+    summarise(pred = mean(pred),
+              hdr_conv = mean(hdr_conv)
+    ) %>% 
+    group_by(voxel) %>% 
+    mutate(
+      pred = as.numeric(scale(pred)),
+      hdr_conv = as.numeric(scale(hdr_conv))) %>% 
+    group_by(voxel) %>% 
+    summarise(fun_dist = mean((pred - hdr_conv)^2)
+              
+    )
+  
+  return(predf_dist)
+}
+
+
+get_gp_param_sums <- function(draws, un_vox, nsubjects, ntime) {
+  params <- draws %>% 
+    dplyr::select(!contains("f") & !contains("pred")
+                  & !contains("mean_res") & !contains("resid")) %>%  
+    mutate(draw = row_number())
+  
+  par_long <- params %>% 
+    pivot_longer(-"draw", names_to = "param", values_to = "val") %>% 
+    mutate(vox_num = as.numeric(str_extract(param, "\\d+"))) %>% 
+    mutate(param = str_replace(param, "\\[\\d+\\]", "")) 
+  
+  voxels <- data.frame(vox_num = 1:length(un_vox), voxel = un_vox)
+  
+  par_wide <- par_long %>% 
+    left_join(voxels, by = "vox_num") %>% 
+    pivot_wider(names_from = param, values_from = val) %>% 
+    mutate(n = nsubjects*ntime*4) %>% #prod(dim(y_arr)[1:3])) %>% 
+    filter(!is.na(voxel))
+  
+  par_wide$tau_sigma_rho <- rep(draws$tau_sigma_rho, length(un_vox))
+  par_wide$rho <- rep(draws$rho, length(un_vox))
+  
+  param_sums <- par_wide %>% 
+    rowwise() %>% 
+    mutate(kappa = 1 / (1 + (nsubjects*ntime*4) * lambda^2 * tau_sigma_rho^2 
+                        * 1/(tau^2))) %>% 
+    group_by(voxel) %>% 
+    summarise(kappa = mean(kappa),
+              rho = mean(rho),
+              lambda = mean(lambda), 
+              tau = mean(tau),
+              alpha = mean(alpha),
+              beta = mean(beta), 
+              phi = mean(phi),
+              n = unique(n),
+              tau_sigma_rho = mean(tau_sigma_rho)) %>% 
+    mutate(active = ifelse(kappa < .5, TRUE, FALSE))
+  
+  return(param_sums)
+}
+
+
+
+get_gp_act_res <- function(hdr_df, params_sums) {
+  true_act <- hdr_df %>% 
+    filter(time == 1) %>% 
+    group_by(voxel) %>% 
+    summarise(act_sum = sum(active))
+  
+  act_res <- true_act %>% 
+    left_join(param_sums, by = "voxel")
+  
+  return(act_res)
+}
+
 
 
 
