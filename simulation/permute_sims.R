@@ -1,17 +1,20 @@
 source("./simulation_functions.R")
+library(future.apply)
+
+args <- commandArgs()
 
 
-nsubjects <- 10
-pmethod <- "shift"
-K <- 40
-M <- 500
+pmethod <- args[6]
+nsubjects <- as.numeric(args[7])
+
+K <- 20
+M <- 5
 set.seed(21)
 seeds <- sample(2^31-1, M, replace = FALSE)
 
-
 plan(multisession, workers = min(M, 110))  # Windows-friendly
-res <- future_lapply(1:M,  
-          function(m) {
+res <- future_lapply(1:M, future.seed = TRUE,  
+          FUN = function(m) {
             
             sims_test <- sim_fmri_data(nsubs = nsubjects, seed = seeds[m])
             hdr_df <- sims_test[[2]] %>% 
@@ -23,7 +26,7 @@ res <- future_lapply(1:M,
             zcor_ts <- est_zcor(cor_rd_df)
             
             perm_zcors <- get_perm_zcors(cor_rd_df, K = K, perm = pmethod)
-            act_res <- get_act_res(perm_zcors, hdr_df)
+            act_res <- get_act_res(perm_zcors, hdr_df, zcor_ts)
             all_res <- act_res %>% 
               left_join(fun_dist, by = "voxel") %>% 
               mutate(m = m, method = pmethod)
@@ -33,4 +36,4 @@ res <- future_lapply(1:M,
         })
 
 
-
+saveRDS(res, paste0("./perm_", pmethod, "_", nsubjects, ".rds"))

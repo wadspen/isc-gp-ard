@@ -295,7 +295,7 @@ get_perm_zcors <- function(cor_rd_df, K = 2000, perm = "cyclic") {
   return(perm_zcors)
 }
 
-get_act_res <- function(perm_zcors, hdr_df) {
+get_act_res <- function(perm_zcors, hdr_df, zcor_ts) {
   sim_act <- perm_zcors %>% 
     left_join(zcor_ts, by = "voxel") %>% 
     mutate(dp = mcorr < pmcorr) %>% 
