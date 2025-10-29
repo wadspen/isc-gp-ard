@@ -146,6 +146,8 @@ get_hdr_df_pb <- function(all_bold, atlas_df, max_time = 50, subs = 1:22,
                 filter(z %in% cross_sec) %>% 
                 dplyr::select(-z), by = c("x", "y")) %>% 
     filter(roi != 0)
+  
+  return(hdr_df_pb)
 }
 
 

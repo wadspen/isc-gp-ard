@@ -1,0 +1,474 @@
+library(neuRosim)
+# library(hrf)
+library(ggplot2)
+library(dplyr)
+library(stringr)
+library(tidyr)
+library(MASS)
+library(tidyr)
+library(purrr)
+library(cmdstanr)
+library(abind)
+library(schoolmath)
+library(PTHfftSURROGATES)
+
+is_stationary <- function(rho) {
+  # Characteristic polynomial: 1 - rho1*z - rho2*z^2 - ...
+  roots <- polyroot(c(1, -rho))
+  all(Mod(roots) > 1)  # Stationary if all roots are outside unit circle
+}
+
+# Draw stationary AR(3) coefficients
+draw_stationary_ar3 <- function() {
+  repeat {
+    rho <- mvrnorm(1, 
+                   c(0.142,0.108,0.084),
+                   diag(rep(.03, 3)))   # random candidate coefficients
+    if (is_stationary(rho)) return(rho)
+  }
+}
+
+
+my_shift <- function(ts, ns) {
+  rsamp <- sample(unique(ns), 1)
+  sts <- data.table::shift(ts, n = rsamp, type = "cyclic")
+  return(sts)
+}
+
+
+
+sim_fmri_data <- function(nsubs = 22, dims = c(40, 22), seed = 16) {
+  set.seed(seed)
+  nscan <- 250
+  TR <- 2
+  total.time <- nscan*TR
+  nTime <- total.time/TR
+  onsets.N1 <- c( 6.75, 15.75, 18.00, 27.00, 29.25, 31.50,
+                  36.00, 42.75, 65.25, 74.25, 92.25, 112.50, 119.25,
+                  123.75, 126.00, 137.25, 141.75, 144.00, 146.25, 155.25,
+                  159.75, 162.00, 164.25, 204.75, 238.50)*TR
+  onsets.N2 <- c(13.50, 40.50, 47.25, 56.25, 90.00, 94.50,
+                 96.75, 135.00, 148.50, 184.50, 191.25, 202.50, 216.00,
+                 234.00, 236.25)*TR#, 256.50, 261.00, 281.25, 290.25, 303.75,
+  # 310.50, 319.50, 339.75, 342.00)*TR
+  onsets.F1 <- c( 0.00, 2.25, 9.00, 11.25, 22.50, 45.00,
+                  51.75, 60.75, 63.00, 76.50, 78.75, 85.50, 99.00,
+                  101.25, 103.50, 117.00, 130.50, 150.75, 171.00, 189.00,
+                  227.25)*TR#, 265.50, 283.50, 285.75, 288.00, 344.25)*TR
+  onsets.F2 <- c(33.75, 49.50, 105.75, 153.00, 157.50, 168.75,
+                 177.75, 180.00, 182.25, 198.00, 222.75, 240.75)*TR#, 254.25,
+  # 267.75, 270.00, 274.40, 294.75, 299.25, 301.50, 315.00,
+  # 317.25, 326.25, 333.00, 335.25, 337.50, 346.50)*TR
+  onsets <- list(onsets.N1, onsets.N2, onsets.F1, onsets.F2)
+  # onsets <- list(onsets.F2)
+  dur <- list(0, 0, 0, 0)
+  # dur <- list(0)
+  
+  
+  subjects <- 1:nsubs
+  sub_data <- list()
+  
+  hdr_sim <- data.frame()
+  for (i in 1:length(subjects)) {
+    
+    
+    region.1A.center <- c(11,8)
+    region.1A.radius <- ceiling(rnorm(1, 3, .56))
+    region.1B.center <- c(28,16)
+    region.1B.radius <- ceiling(rnorm(1, 3.4, .5))
+    # region.1C.center <- c(10,45,24)
+    # region.1C.radius <- 3
+    # region.2.center <- c(15,16,31)
+    # region.2.radius <- 5
+    # region.3.center <- c(12,16,13)
+    # region.3.radius <- 5
+    coord.regions <- list(region.1A.center, region.1B.center)
+    radius.regions <- c(region.1A.radius,region.1B.radius)
+    onsets.regions <- list(onsets, onsets)
+    dur.regions <- list(dur, dur)
+    
+    
+    # region.1a.d <- list(160.46, 140.19, 200.16, 160.69)
+    # region.1b.d <- list(140.51, 120.71, 160.55, 120.44)
+    # region.1c.d <- list(120.53, 120.74, 140.02, 100.48)
+    # region.2.d <- list( -0.24, 10.29, 80.18, 160.24)
+    # region.3.d <- list(192.7, 50.04, 240.60, 50.83)
+    
+    region.1a.d <- as.list(rnorm(4, 2.4, .2)) #change sample size to number of stimuli
+    region.1b.d <- as.list(rnorm(4, 1.7, .21))
+    # region.1c.d <- as.list(rnorm(4, 1.5, .5))
+    # region.2.d <- as.list(rnorm(4, 1.5, .5))
+    # region.3.d <- as.list(rnorm(4, 1.5, .5))
+    effect <- list(region.1a.d,region.1b.d)
+    
+    design <- simprepTemporal(regions=2,
+                              onsets=onsets.regions, durations=dur.regions,
+                              hrf="double-gamma", TR=TR, 
+                              totaltime=total.time,
+                              effectsize=effect)
+    spatial <- simprepSpatial(regions=2,
+                              coord=coord.regions, radius=radius.regions,
+                              form="sphere", fading=.1)
+    
+    temp <- draw_stationary_ar3()
+    sub_data[[i]] <- simVOLfmri(design=design, image=spatial,
+                                base=0, SNR=.5, 
+                                noise="mixture", 
+                                type="rician",
+                                rho.temp=temp,
+                                rho.spat=abs(rnorm(1, 0.4,.1)),
+                                w=c(0.05,0.1,0.01,0.09,0.05,0.7), 
+                                dim=dims,
+                                # template=baseline.bin,
+                                spat="gaussRF")
+    
+    
+    signal_mask <- simVOLfmri(design = design, image = spatial,
+                              base = 0, SNR = Inf, dim = c(40, 22), 
+                              spat = "gaussRF")
+    
+    str_mask <- apply(signal_mask[,,], MARGIN = c(1,2), FUN = function(x) {
+      mean(x)
+    })
+    
+    mask <- apply(str_mask, MARGIN = 1:2, function(x) any(x != 0))
+    
+    arr <- sub_data[[i]]
+    nx <- dim(arr)[1]
+    ny <- dim(arr)[2]
+    nt <- dim(arr)[3]
+    
+    df <- data.frame(subject = subjects[i],
+                     expand.grid(x = 1:nx, y = 1:ny),
+                     matrix(aperm(arr, c(3,1,2)), nrow = nx*ny, 
+                            ncol = nt, byrow = TRUE)
+    )
+    
+    mask_df <- data.frame(subject = subjects[i],
+                          expand.grid(x = 1:nx, y = 1:ny),
+                          active = matrix(aperm(mask, c(1,2)), nrow = nx*ny, 
+                                          byrow = TRUE)
+    )
+    
+    str_df <- data.frame(subject = subjects[i],
+                         expand.grid(x = 1:nx, y = 1:ny),
+                         msignal = matrix(aperm(str_mask, c(1,2)), 
+                                          nrow = nx*ny, 
+                                          byrow = TRUE)
+    )
+    
+    # Name time columns nicely
+    colnames(df)[-(1:3)] <- paste0("t", 1:nt)
+    
+    
+
+    
+    df_long <- df %>% 
+      pivot_longer(4:ncol(df), names_to = "time", values_to = "hdr") %>% 
+      mutate(time = as.numeric(str_replace(time, "t", ""))) %>% 
+      left_join(mask_df, by = c("subject", "x", "y")) %>% 
+      left_join(str_df, by = c("subject", "x", "y")) %>% 
+      mutate(voxel = paste(x, y, sep = "_"))
+    
+    luv <- length(unique(df_long$voxel))
+    
+    spatial <- simprepSpatial(
+      regions = 2,
+      coord = list(c(1, 1, 1), c(1, 1, 1)),
+      radius = c(1, 1),
+      form = "sphere"
+    )
+    
+    
+    sim_hdr <- simVOLfmri(design=design, image=spatial,
+                          base=0, SNR=1, 
+                          noise="none", 
+                          type="rician",
+                          rho.temp=0,
+                          rho.spat=0,
+                          w=c(1), 
+                          dim=c(1,1,1),
+                          # template=baseline.bin,
+                          spat="gaussRF")
+    
+    hdr_convolved <- as.numeric(sim_hdr)
+    hdr_convolved <- as.numeric(scale(hdr_convolved))
+    df_long$hdr_conv <- rep(hdr_convolved, luv)
+    
+    hdr_sim <- rbind(hdr_sim, df_long)
+    
+    
+    
+    
+    
+    
+  }
+  
+  
+  # coords <- df_long %>% 
+  #   dplyr::select(x,y) %>% 
+  #   unique()
+  
+  
+  return(list(sub_data, hdr_sim))
+}
+
+get_est_fun_dist <- function(hdr_df) {
+  fun_dist <- hdr_df %>% 
+    group_by(voxel, time) %>% 
+    summarise(est_hdr = mean(hdr),
+              hdr_conv = first(hdr_conv)) %>% 
+    group_by(voxel) %>% 
+    mutate(est_hdr = as.numeric(scale(est_hdr))) %>% 
+    # dplyr::select(voxel, time, hdr_conv, est_hdr) %>% 
+    unique() %>% 
+    group_by(voxel) %>% 
+    summarise(fun_dist = mean((est_hdr - hdr_conv)^2))
+  
+  return(fun_dist)
+}
+
+
+make_cor_rd_df <- function(hdr_df) {
+  for_cor_df <- hdr_df %>% 
+    dplyr::select(subject, voxel, time, hdr)
+
+  df_pairs <- for_cor_df %>%
+    rename(subject1 = subject, hdr1 = hdr) %>%
+    inner_join(
+      for_cor_df %>% rename(subject2 = subject, hdr2 = hdr),
+      by = c("voxel", "time")
+    ) %>% 
+    filter(subject1 < subject2) %>% 
+    arrange(voxel, subject1, subject2, time) %>% 
+    mutate(pair = paste(subject1, subject2, sep = "_"))
+  
+  return(df_pairs)
+}
+
+est_zcor <- function(cor_rd_df, perm = FALSE) {
+  tss <- cor_rd_df %>% 
+    group_by(voxel, pair) %>% 
+    summarise(corr = fishZ(cor(hdr1, hdr2))) %>% 
+    group_by(voxel) %>% 
+    summarise(pmcorr = median(corr))
+  
+  if (perm == FALSE) {
+    tss$mcorr <- tss$pmcorr
+    tss <- tss %>% 
+      dplyr::select(-pmcorr)
+  }
+  
+  
+  return(tss)
+}
+
+perm_hdr <- function(cor_rd_df, method = "cyclic") {
+  
+  if (method == "cyclic") {
+    hdr_perm <- cor_rd_df %>% 
+      group_by(pair, voxel) %>% 
+      mutate(n = n()) %>% 
+      mutate(hdr2 = my_shift(hdr2, n))
+  } else if (method == "shift") {
+    hdr_perm <- cor_rd_df %>% 
+      group_by(pair, voxel) %>% 
+      mutate(hdr2 = phase_scramble2(hdr2))
+  }
+  
+  return(hdr_perm)
+}
+
+get_perm_zcors <- function(cor_rd_df, K = 2000, perm = "cyclic") {
+  all_perm_zcors <- list()
+    for (i in 1:K) {
+      hdr_perm <- perm_hdr(cor_rd_df, perm)
+      perm_zcor <- est_zcor(hdr_perm, perm = TRUE)
+      perm_zcor$rep <- i
+      all_perm_zcors[[i]] <- perm_zcor
+    }
+  
+  perm_zcors <- do.call(rbind, all_perm_zcors)
+  return(perm_zcors)
+}
+
+get_act_res <- function(perm_zcors, hdr_df) {
+  sim_act <- perm_zcors %>% 
+    left_join(zcor_ts, by = "voxel") %>% 
+    mutate(dp = mcorr < pmcorr) %>% 
+    group_by(voxel) %>% 
+    summarise(pval = mean(dp)) %>% 
+    ungroup() %>% 
+    mutate(n = length(unique(voxel))) %>%
+    mutate(active = ifelse(pval < .05/n, TRUE, FALSE))
+  
+  true_act <- hdr_df %>% 
+    filter(time == 1) %>% 
+    group_by(voxel) %>% 
+    summarise(act_sum = sum(active))
+  
+  act_res <- true_act %>% 
+    left_join(sim_act, by = "voxel")
+  
+  return(act_res)
+}
+
+make_zcor_df <- function(df) {
+  
+  pairwise_corrs <- df %>%
+    mutate(voxel = paste(x, y, sep = "_")) %>% 
+    dplyr::select(subject, voxel, time, hdr) %>% 
+    group_by(voxel) %>%
+    summarise(
+      corr_matrix = list({
+        dat <- cur_data_all()
+        
+        # pivot so each subject is a column
+        wide <- dat %>%
+          pivot_wider(names_from = subject, values_from = hdr)
+        
+        # explicitly select only subject columns
+        subject_cols <- setdiff(names(wide), c("time", "voxel"))
+        mat <- as.data.frame(wide)[, subject_cols, drop = FALSE]
+        
+        # compute correlation matrix across subjects
+        cor(mat, use = "pairwise.complete.obs")
+      }),
+      .groups = "drop"
+    )
+  
+  
+  isc_long <- map2_dfr(
+    pairwise_corrs$voxel,
+    pairwise_corrs$corr_matrix,
+    function(loc_name, corr_mat) {
+      as.data.frame(as.table(corr_mat)) %>%
+        rename(n1 = Var1, n2 = Var2, corr = Freq) %>%
+        mutate(voxel = loc_name)
+    }
+  )
+  
+  low_tr <- isc_long %>% 
+    mutate(n1 = as.numeric(as.character(n1)),
+           n2 = as.numeric(as.character(n2))) %>% 
+    filter(n1 < n2) %>% 
+    arrange(voxel, n1, n2) %>% 
+    mutate(zcor = fishZ(corr)) %>% 
+    dplyr::select(-corr)
+  
+  return(low_tr)
+}
+
+
+
+
+
+
+make_est_zcor <- function(sub_data, coords, dims = c(40, 22)) {
+    subjects <- 1:length(sub_data)
+    est_cor <- matrix(NA, nrow = dims[1], ncol = dims[2])
+    est_zcor <- est_cor
+    for (c in 1:nrow(coords)) {
+      x <- coords[c, 1]; y <- coords[c, 2]
+      sub_cor <- matrix(NA, nrow = length(subjects), ncol = length(subjects))  
+      for (i in 1:length(subjects)) {
+        for (j in i:length(subjects)) {
+          sub_cor[i,j] <- as.numeric(cor(scale(sub_data[[i]][x,y,1:50]), 
+                                         scale(sub_data[[j]][x,y,1:50])))
+          sub_cor[j,i] <- sub_cor[i,j]
+          
+        }
+      }
+      diag(sub_cor) <- 0
+      rho <- median(sub_cor, na.rm = TRUE)
+      est_cor[x, y] <- rho
+      est_zcor[x, y] <- fishZ(rho)
+      
+    }
+    
+    return(est_zcor)
+}
+
+
+
+
+cyclic_test <- function(sub_data, coords, dims = c(40, 22)) {
+  subjects <- 1:length(sub_data)
+  perm_est_zcor <- matrix(NA, nrow = dims[1], ncol = dims[2])
+  library(schoolmath)
+  for (c in 1:nrow(coords)) {
+    x <- coords[c, 1]; y <- coords[c, 2]
+    sub_cor <- matrix(NA, nrow = length(subjects), 
+                      ncol = length(subjects))  
+    for (i in subjects) {
+      for (j in subjects) {
+        ts1 <- as.numeric(scale(sub_data[[i]][x,y,1:50]))
+        ts2 <- as.numeric(scale(sub_data[[j]][x,y,1:50]))
+        ts1 <- data.table::shift(ts1,
+                                 n = sample(length(ts1), 1),
+                                 type = "cyclic")
+        sub_cor[i,j] <- as.numeric(cor(ts1,
+                                       ts2))
+        sub_cor[j,i] <- sub_cor[i,j]
+        
+      }
+    }
+    diag(sub_cor) <- 0
+    rho <- median(sub_cor, na.rm = TRUE)
+    perm_est_zcor[x, y] <- fishZ(rho)
+    
+  }
+  perm_est_zcor
+}
+
+
+rep_resamp_test <- function(resamp_func = NULL, est_zcor = NULL, 
+                            sub_data, coords, dims = c(40, 22), 
+                            K = 5000) {
+  
+  if (is.null(resamp_func)) {return()}
+  
+  corrs_list <- list()
+  for (k in 1:K) {
+    corrs_list[[k]] <- resamp_func(sub_data, coords, dims)
+  }
+  sim_arr <- simplify2array(corrs_list)
+  sig_map <- matrix(NA, nrow = dims[1], ncol = dims[2])
+  for (i in 1:dims[1]) {
+    for (j in 1:dims[2]) {
+      sig_map[i,j] <- mean(abs(sim_arr[i,j,]) > est_zcor[i,j], na.rm = TRUE)
+    }
+  }
+  
+  df <- data.frame(
+    y = rep(1:ncol(sig_map), each = nrow(sig_map)),
+    x = rep(1:nrow(sig_map), times = ncol(sig_map)),
+    pval = as.vector(sig_map)
+  )
+  
+  return(df)
+}
+
+
+
+
+
+
+fishZ <- function(rho) {
+  rhoZ <- .5 * log((1 + rho) / (1 - rho))
+  return(rhoZ)
+}
+
+
+
+
+
+
+bootstrap <- function(data, n) {
+  resampled_data <- lapply(1:n, function(i) {
+    resample <- sample(data, replace = TRUE)
+    # Perform desired operations on the resampled data, e.g., compute a statistic
+    # and return the result
+  })
+  return(resampled_data)
+}

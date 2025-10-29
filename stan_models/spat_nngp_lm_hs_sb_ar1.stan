@@ -40,7 +40,7 @@ parameters {
   vector[C] alpha;
   // vector[C] delta;
   vector<lower=0>[C] beta;
-  vector<lower=0>[S] zeta;
+  // vector<lower=0>[S] zeta;
   // real<lower=-1,upper=1> 
   vector<lower=-1, upper=1>[C] ar_phi;   // AR(1) coefficients per channel
 }
@@ -79,14 +79,14 @@ model {
   // rho ~ normal(mu_rho, tau_sigma_rho .* lambda);
   // sigma ~ std_normal();
   rho ~ std_normal();
-  zeta ~ std_normal();
+  // zeta ~ std_normal();
   // gamma[,1] ~ std_normal();
   // for ()
   // rho ~ normal(mu_rho, tau_sigma_rho .* sqrt(lambda2_tilde));
   // tau ~ normal(mu_tau, sigma_tau);
   // tau ~ std_normal();
-  tau ~ normal(0, .5);
-  ar_phi ~ normal(0, .4);
+  tau ~ normal(0, .05);
+  ar_phi ~ normal(0, .1);
   // rho_gamma ~ normal(0, .5);
   // sigma_gamma ~ std_normal();
   // gamma[,1] ~ std_normal();
@@ -117,7 +117,7 @@ model {
   
   for (c in 1:C) {
     for (s in 1:S) {
-      vector[N] mu = zeta[s] * beta[c] * f;
+      vector[N] mu = beta[c] * f;
       vector[N] resid = to_vector(y[s, , c]) - mu;
 
     // AR(1) model on residuals
@@ -149,8 +149,8 @@ generated quantities {
     pred_res[c] = beta[c] * f;
 
     for (s in 1:S) {
-      mean_res[c,s] = zeta[s] * beta[c] * f; 
-      vector[N] mu = zeta[s] * beta[c] * f;
+      mean_res[c,s] = beta[c] * f; 
+      vector[N] mu = beta[c] * f;
       vector[N] resid = to_vector(y[s, , c]) - mu;
       resid_out[c, s] = resid;         // save residuals
       // pred_res[c, s] = pred_res[c] + resid_out[c, s];
@@ -162,7 +162,14 @@ generated quantities {
   // 
   for (c in 1:C) {
     for (s in 1:S) {
-      preds_res[c, s] = mean_res[c,s] + resid_out[c, s];
+      preds_res[c,s,1] = mean_res[c,s,1] + normal_rng(0, 
+                                                tau[c] / 
+                                                  sqrt(1 - square(ar_phi[c])));
+      for (n in 2:N) {
+        preds_res[c,s,n] = mean_res[c,s,n] + 
+                              normal_rng(ar_phi[c]*resid_out[c,s,n-1], 
+                                         tau[c]);
+      }
     }
   }
 }
