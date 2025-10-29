@@ -2,8 +2,8 @@ source("./simulation_functions.R")
 
 
 nsubjects <- 10
-pmethod <- "cyclic"
-K <- 20
+pmethod <- "shift"
+K <- 40
 M <- 500
 set.seed(21)
 seeds <- sample(2^31-1, M, replace = FALSE)
@@ -26,7 +26,7 @@ res <- future_lapply(1:M,
             act_res <- get_act_res(perm_zcors, hdr_df)
             all_res <- act_res %>% 
               left_join(fun_dist, by = "voxel") %>% 
-              mutate(m = m, method = perm)
+              mutate(m = m, method = pmethod)
             
             all_res
           

@@ -59,10 +59,10 @@ sim_fmri_data <- function(nsubs = 22, dims = c(40, 22), seed = 16) {
                  177.75, 180.00, 182.25, 198.00, 222.75, 240.75)*TR#, 254.25,
   # 267.75, 270.00, 274.40, 294.75, 299.25, 301.50, 315.00,
   # 317.25, 326.25, 333.00, 335.25, 337.50, 346.50)*TR
-  onsets <- list(onsets.N1, onsets.N2, onsets.F1, onsets.F2)
-  # onsets <- list(onsets.F2)
-  dur <- list(0, 0, 0, 0)
-  # dur <- list(0)
+  # onsets <- list(onsets.N1, onsets.N2, onsets.F1, onsets.F2)
+  onsets <- list(onsets.F2)
+  # dur <- list(0, 0, 0, 0)
+  dur <- list(0)
   
   
   subjects <- 1:nsubs
@@ -94,8 +94,8 @@ sim_fmri_data <- function(nsubs = 22, dims = c(40, 22), seed = 16) {
     # region.2.d <- list( -0.24, 10.29, 80.18, 160.24)
     # region.3.d <- list(192.7, 50.04, 240.60, 50.83)
     
-    region.1a.d <- as.list(rnorm(4, 2.4, .2)) #change sample size to number of stimuli
-    region.1b.d <- as.list(rnorm(4, 1.7, .21))
+    region.1a.d <- as.list(rnorm(1, 2.4, .2)) #change sample size to number of stimuli
+    region.1b.d <- as.list(rnorm(1, 1.7, .21))
     # region.1c.d <- as.list(rnorm(4, 1.5, .5))
     # region.2.d <- as.list(rnorm(4, 1.5, .5))
     # region.3.d <- as.list(rnorm(4, 1.5, .5))
