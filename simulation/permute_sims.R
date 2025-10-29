@@ -27,7 +27,7 @@ res <- future_lapply(1:M,
             all_res <- act_res %>% 
               left_join(fun_dist, by = "voxel") %>% 
               mutate(m = m, method = pmethod)
-            
+             
             all_res
           
         })
