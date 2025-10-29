@@ -1,3 +1,4 @@
+.libPaths("~/rlibs")
 library(neuRosim)
 # library(hrf)
 library(ggplot2)
