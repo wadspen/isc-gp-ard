@@ -7,12 +7,12 @@ args <- commandArgs()
 pmethod <- args[6]
 nsubjects <- as.numeric(args[7])
 
-K <- 20
-M <- 5
+K <- 2000
+M <- 500
 set.seed(21)
 seeds <- sample(2^31-1, M, replace = FALSE)
 
-plan(multisession, workers = min(M, 110))  # Windows-friendly
+plan(multisession, workers = min(M, 120))  # Windows-friendly
 res <- future_lapply(1:M, future.seed = TRUE,  
           FUN = function(m) {
             
@@ -36,4 +36,4 @@ res <- future_lapply(1:M, future.seed = TRUE,
         })
 
 
-saveRDS(res, paste0("./perm_", pmethod, "_", nsubjects, ".rds"))
+saveRDS(res, paste0("./sim_res/perm_", pmethod, "_", nsubjects, ".rds"))
