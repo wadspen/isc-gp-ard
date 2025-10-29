@@ -1,4 +1,4 @@
-.libPaths("~/rlibs")
+# .libPaths("~/rlibs")
 library(neuRosim)
 # library(hrf)
 library(ggplot2)
@@ -12,6 +12,7 @@ library(cmdstanr)
 library(abind)
 library(schoolmath)
 library(PTHfftSURROGATES)
+library(gptoolsStan)
 
 is_stationary <- function(rho) {
   # Characteristic polynomial: 1 - rho1*z - rho2*z^2 - ...
@@ -474,3 +475,126 @@ bootstrap <- function(data, n) {
   })
   return(resampled_data)
 }
+
+
+
+
+
+
+################################################################
+####################Sparse GP model functions###################
+################################################################
+
+
+get_stan_data <- function(hdr_df) {
+  hdr_df_pb <- hdr_df %>%
+    group_by(subject, x, y) %>%
+    mutate(hdr = as.numeric(scale(hdr, center = TRUE, scale = TRUE))) %>%
+    ungroup() %>%
+    filter(!is.na(hdr))
+  
+  edge_df <- hdr_df_pb %>%
+    dplyr::select(x, y) %>% 
+    unique() %>% 
+    mutate(id = row_number(), voxel = paste(x, y, sep = "_"))
+  
+  edges_x <- edge_df %>% 
+    inner_join(edge_df, by = "x", suffix = c(".a", ".b")) %>%
+    filter(id.a < id.b) %>%
+    dplyr::select(id.a, id.b)
+  
+  edges_y <- edge_df %>%
+    inner_join(edge_df, by = "y", suffix = c(".a", ".b")) %>%
+    filter(id.a < id.b) %>%
+    dplyr::select(id.a, id.b)
+  
+  edges <- bind_rows(edges_x, edges_y) %>% distinct()
+  
+  edges <- edge_df %>%
+    inner_join(edge_df, by = character(), suffix = c(".a", ".b")) %>%
+    filter(id.a < id.b) %>%
+    filter(abs(x.a - x.b) + abs(y.a - y.b) == 1) %>%
+    dplyr::select(id.a, id.b)
+  
+  
+  hdr_df_red <- hdr_df_pb %>%
+    dplyr::select(subject, hdr, time, x, y, voxel)
+  
+  edge_df <- hdr_df_red %>%
+    dplyr::select(x, y) %>% 
+    unique() %>% 
+    mutate(id = row_number(), 
+           voxel = paste(x, y, sep = "_"))
+  
+  
+  edges <- edge_df %>%
+    inner_join(edge_df, by = character(), suffix = c(".a", ".b")) %>%
+    filter(id.a < id.b) %>%
+    filter(abs(x.a - x.b) + abs(y.a - y.b) == 1) %>%
+    dplyr::select(id.a, id.b)
+  
+  
+  
+  
+  voxels <- unique(hdr_df_pb$voxel)
+  
+  n <- length(unique(hdr_df$time))
+  x <- unique(hdr_df$time)
+  time <- unique(hdr_df$time)
+  un_vox <- edge_df$voxel
+  
+  
+  
+  
+  y_dat_list <- list()
+  for (i in 1:length(un_vox)) {
+    y_dat <- hdr_df %>% 
+      filter(voxel == un_vox[i]) %>% 
+      pivot_wider(id_cols = time, names_from = subject, 
+                  values_from = hdr) %>% 
+      dplyr::select(-time) %>% 
+      t() %>% 
+      as.matrix()
+    y_dat_list[[i]] <- y_dat
+  }
+  
+  y_arr <- abind::abind(y_dat_list, along = 3)
+  
+  edge_index <- rbind(1:(ncol(y_dat) - 1), 2:ncol(y_dat))
+  
+  
+  stan_data <- list(N = n, M = length(un_vox),
+                    S = nrow(y_dat), 
+                    n_edges = nrow(edges),
+                    C = length(unique(hdr_df$voxel)),
+                    y = y_arr,
+                    x = matrix(unique(hdr_df$time), ncol = 1)*2,
+                    dx = 1*2,
+                    nf = n%/%2 + 1,
+                    edge_index = edge_index,
+                    mu_rho = log(10000),
+                    sigma_rho = .1/sqrt(prod(dim(y_arr)[1:3])),
+                    mu_sigma = 0,
+                    sigma_sigma = .01,
+                    mu_tau = 1,
+                    sigma_tau = .1,
+                    r = 1,
+                    nut = 1000,
+                    nul = 1000,
+                    m = 1,
+                    node1 = as.integer(edges$id.a),
+                    node2 = as.integer(edges$id.b))
+  
+  return(stan_data)
+}
+
+
+
+
+
+
+
+
+
+
+
