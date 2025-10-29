@@ -71,7 +71,7 @@ for (i in 1:length(subjects)) {
   # region.3.d <- list(192.7, 50.04, 240.60, 50.83)
   
   region.1a.d <- as.list(rnorm(4, 2.4, .2))
-  region.1b.d <- as.list(rnorm(4, 1.7, .21))
+  region.1b.d <- as.list(abs(rnorm(4, .8, .21)))
   # region.1c.d <- as.list(rnorm(4, 1.5, .5))
   # region.2.d <- as.list(rnorm(4, 1.5, .5))
   # region.3.d <- as.list(rnorm(4, 1.5, .5))

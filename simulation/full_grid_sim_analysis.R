@@ -59,7 +59,7 @@ parc_df %>%
 data_loc <- "../../dme_files/"
 
 
-mod <- cmdstan_model("../stan_models/spat_nngp_lm_hs2.stan", 
+mod <- cmdstan_model("../stan_models/spat_nngp_lm_hs_sb_ar1.stan", 
                      include_paths = gptools_include_path())
 hdr_df_ab <- hdr_sim %>%
   group_by(subject, x, y) %>%
@@ -277,6 +277,6 @@ param_means <- fin_preds
 
 
 saveRDS(param_means, paste0("./spat_bin_wid_", 
-                            bin_wid, "_parc_sim_n_lm_bound_norm_norm_no_fade.rds"))
+                            bin_wid, "_parc_sim_n_lm_bound_norm_norm_weak_um.rds"))
 end <- Sys.time()
 print(end - start)

@@ -3,7 +3,7 @@ source("./analysis_functions.R")
 
 
 
-mod <- cmdstan_model("../stan_models/spat_nngp_lm_hs2.stan", 
+mod <- cmdstan_model("../stan_models/spat_nngp_lm_hs_sb.stan", 
                      include_paths = gptools_include_path())
 
 
@@ -11,12 +11,13 @@ atlas_df <- get_atlas()
 all_bold <- read_bold_data()
 coords_int_full <- get_shared_coords(all_bold)
 hdr_df_pb <- get_hdr_df_pb(all_bold, atlas_df)
+#hdr_df_pb$roi <- 1
 rois <- unique(hdr_df_pb$roi) 
 
 
 options(future.debug = FALSE)
 
-plan(multisession, workers = min(length(rois) + 4, 120))  # Windows-friendly
+plan(multisession, workers = min(length(rois) + 4, 63))  # Windows-friendly
 res <- future_lapply(rois,
                      
   function(ind) {
@@ -32,3 +33,7 @@ res <- future_lapply(rois,
     res
   }
 )
+
+
+
+saveRDS(res, "./spat_lm_ucf_sb.rds")

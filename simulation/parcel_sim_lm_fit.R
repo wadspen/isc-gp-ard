@@ -272,6 +272,6 @@ res <- future_lapply(rois,
 
 
 saveRDS(param_means, paste0("./spat_bin_wid_", 
-                            bin_wid, "_parc_sim_n_lm_bound_norm_norm_no_fade.rds"))
+                            bin_wid, "_parc_sim_n_lm_bound_norm_norm_no_fade_white.rds"))
 end <- Sys.time()
 print(end - start)
