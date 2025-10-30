@@ -1,4 +1,4 @@
-.libPaths("~/rlibs")
+# .libPaths("~/rlibs")
 library(neuRosim)
 # library(hrf)
 library(ggplot2)
@@ -689,7 +689,81 @@ get_gp_act_res <- function(hdr_df, params_sums) {
 
 
 
+get_blme_stan_data <- function(cor_rd_df, nsubjects) {
+  pair_zcor_df <- cor_rd_df %>% 
+    group_by(voxel, pair) %>% 
+    summarise(zcor = fishZ(cor(hdr1, hdr2))) %>% 
+    separate(pair, into = c("n1", "n2"), sep = "_", 
+             convert = TRUE)
+  
+  nobs <- length(unique(cor_rd_df$pair))
+  
+  sub_space <- pair_zcor_df %>% 
+    ungroup() %>% 
+    dplyr::select(n1, n2) %>% 
+    unique() %>% 
+    as.matrix()
+  
+  W <- matrix(0, nrow = nobs, ncol = nobs)
+  for (i in 1:nrow(sub_space)) {
+    for (j in i:nrow(sub_space)) {
+      nusubs <- length(unique(c(sub_space[i,], sub_space[j,])))
+      W[i,j] <- ifelse(nusubs == 3, 1, 0)
+      W[j,i] <- W[i,j]
+    }
+  }
+  
+  
+  
+  pz_wide <- pair_zcor_df %>% 
+    mutate(comb = paste(n1, n2, sep = "_")) %>% 
+    dplyr::select(zcor, voxel, comb, n1, n2) %>% 
+    pivot_wider(names_from = voxel, values_from = zcor)
+  
+  ymat <- pz_wide %>% 
+    dplyr::select(-comb, -n1, -n2) %>% 
+    as.matrix()
+  
+  S <- nsubjects
+  
+  stan_data <- list(N = nrow(pair_zcor_df),
+                    S = S,
+                    R = ncol(ymat),
+                    V = 1/2 * S * (S - 1), 
+                    y = ymat,
+                    subjects = 1:nsubjects,
+                    n1_inds = pz_wide$n1,
+                    n2_inds = pz_wide$n2,
+                    n1s = pair_zcor_df$n1,
+                    n2s = pair_zcor_df$n2,
+                    ROIs = as.numeric(unique(factor(pair_zcor_df$voxel))),
+                    rs = as.numeric(factor(pair_zcor_df$voxel)),
+                    W = W,
+                    I = diag(rep(1, ncol(W))))
+  
+  return(stan_data)
+}
 
+
+get_blme_par_res <- function(draws, un_vox) {
+  par_res <- draws %>% 
+    dplyr::select(contains("pi0")) %>% 
+    pivot_longer(everything(), names_to = "param") %>% 
+    mutate(vox_num = 
+             as.numeric(str_extract(param, "(?<=\\[)\\d+(?=\\])"))) %>% 
+    dplyr::select(-param) %>% 
+    group_by(vox_num) %>% 
+    summarise(upp = quantile(value, .975),
+              low = quantile(value, .025),
+              pred = mean(value)) %>%
+    rowwise() %>% 
+    mutate(active = low > 0) %>% 
+    arrange(vox_num)
+  
+  par_res$voxel = un_vox
+  
+  return(par_res)
+}
 
 
 
