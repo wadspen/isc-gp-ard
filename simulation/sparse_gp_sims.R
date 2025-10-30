@@ -1,8 +1,8 @@
 source("./simulation_functions.R")
 
-
-nsubjects <- 5
-pmethod <- "sgp"
+args <- commandArgs()
+nsubjects <- as.numeric(args[6])
+pmethod <- "sgp_ar1"
 K <- 40
 M <- 500
 set.seed(21)
@@ -12,7 +12,7 @@ mod <- cmdstan_model("../stan_models/spat_nngp_lm_hs_sb_ar1.stan",
                      include_paths = gptools_include_path())
 
 m <- 4
-plan(multisession, workers = min(M, 110))  # Windows-friendly
+plan(multisession, workers = min(M, 120))  # Windows-friendly
 res <- future_lapply(1:M,  
           function(m) {
             
@@ -41,12 +41,12 @@ res <- future_lapply(1:M,
             
             
             all_res <- get_gp_act_res(hdr_df, param_sums) %>% 
-              mutate(m = m, method = "sgp")
+              mutate(m = m, method = pmethod)
             
             all_res
             
           
-        })
+       })
 
 
 saveRDS(res, paste0("./sim_res/sgp_", pmethod, "_", nsubjects, ".rds"))
