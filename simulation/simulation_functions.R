@@ -61,7 +61,7 @@ sim_fmri_data <- function(nsubs = 22, dims = c(40, 22), seed = 16) {
                  177.75, 180.00, 182.25, 198.00, 222.75, 240.75)*TR#, 254.25,
   # 267.75, 270.00, 274.40, 294.75, 299.25, 301.50, 315.00,
   # 317.25, 326.25, 333.00, 335.25, 337.50, 346.50)*TR
-  simple_onsets <- seq(15, 150, by = 30)*TR
+  simple_onsets <- seq(3, 60, by = 16)*TR
   # onsets <- list(onsets.N1, onsets.N2, onsets.F1, onsets.F2)
   onsets <- list(simple_onsets)
   # dur <- list(0, 0, 0, 0)
