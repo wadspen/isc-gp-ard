@@ -66,10 +66,10 @@ transformed parameters {
 model {
   // Priors
   target += -0.5 * dot_self(alpha[node1] - alpha[node2]);
-  sum(alpha) ~ normal(0, 0.01 * M);
+  sum(alpha) ~ normal(0, 0.001 * M);
   
   // target += -0.5 * dot_self(delta[node1] - delta[node2]);
-  // sum(delta) ~ normal(0, 0.01 * C);
+  // sum(delta) ~ normal(0, 0.001 * C);
   // alpha ~ normal(0, tau_sigma_rho .* lambda);
   tau_sigma_rho ~ student_t(nut, 0, sigma_rho);
   lambda ~ student_t(nul, 0, phi);
