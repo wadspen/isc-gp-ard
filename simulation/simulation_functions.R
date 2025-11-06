@@ -675,7 +675,7 @@ get_gp_param_sums <- function(draws, un_vox, nsubjects, ntime) {
 
 
 
-get_gp_act_res <- function(hdr_df, params_sums) {
+get_gp_act_res <- function(hdr_df, param_sums) {
   true_act <- hdr_df %>% 
     filter(time == 1) %>% 
     group_by(voxel) %>% 
