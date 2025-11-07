@@ -590,20 +590,24 @@ get_stan_data <- function(hdr_df) {
 
 get_sgp_fun_dist <- function(draws, hdr_df, un_vox) {
   predf_draws <- draws %>% 
-    dplyr::select(contains("mean_res["))
+    dplyr::select(contains("f["))
   
-  predf = predf_draws %>% 
+  predf <- predf_draws %>% 
     pivot_longer(everything(), names_to = "index", 
                  values_to = "draw") %>% 
     rowwise() %>% 
-    extract(index, into = c("vox_num", "subject", "time"),
-            regex = "\\[(\\d+),(\\d+),(\\d+)\\]", convert = TRUE)
+    extract(index, into = "time", regex = "(\\d+)") %>% 
+    mutate(time = as.numeric(time))
+    # rowwise() %>% 
+    # extract(index, into = c("vox_num", "subject", "time"),
+    #         regex = "\\[(\\d+),(\\d+),(\\d+)\\]", convert = TRUE)
   
   predf_sum <- predf %>% 
-    left_join(data.frame(voxel = un_vox, 
-                         vox_num = 1:length(un_vox)),
-              by = "vox_num") %>% 
-    group_by(voxel, time) %>% 
+    # left_join(data.frame(voxel = un_vox, 
+    #                      vox_num = 1:length(un_vox)),
+    #           by = "vox_num") %>% 
+    # group_by(voxel, time) %>% 
+    group_by(time) %>% 
     summarise(pred = mean(draw),
               upper = quantile(draw, probs = 0.975),
               lower = quantile(draw, probs = 0.025))
@@ -611,23 +615,28 @@ get_sgp_fun_dist <- function(draws, hdr_df, un_vox) {
   predf_dist <- predf_sum %>% 
     # group_by(voxel) %>% 
     # mutate(pred = as.numeric(scale(pred))) %>% 
+    # left_join(hdr_df %>% 
+    #             dplyr::select(voxel, time, hdr_conv), 
+    #           by = c("voxel", "time")) %>% 
     left_join(hdr_df %>% 
-                dplyr::select(voxel, time, hdr_conv), 
-              by = c("voxel", "time")) %>% 
+                dplyr::select(time, hdr_conv), 
+              by = c("time")) %>%
     dplyr::select(-upper, -lower) %>% 
-    group_by(voxel, time) %>% 
+    # group_by(voxel, time) %>% 
+    group_by(time) %>% 
     summarise(pred = mean(pred),
               hdr_conv = mean(hdr_conv)
     ) %>% 
-    group_by(voxel) %>% 
+    # group_by(voxel) %>% 
     mutate(
       pred = as.numeric(scale(pred)),
       hdr_conv = as.numeric(scale(hdr_conv))) %>% 
-    group_by(voxel) %>% 
+    # group_by(voxel) %>% 
     summarise(fun_dist = mean((pred - hdr_conv)^2)
               
     )
   
+  predf_dist <- data.frame(voxel = un_vox, fun_dist = predf_dist$fun_dist)
   return(predf_dist)
 }
 
