@@ -45,7 +45,7 @@ distc <- data.frame(t) %>%
   pivot_longer(2:3, names_to = "dist", values_to = "p") %>% 
   ggplot() +
   geom_line(aes(x = t, y = p, colour = dist, linetype = dist), 
-            size = 1.1) +
+            size = .9) +
   scale_linetype_manual(values = c("solid", "longdash")) +
   scale_colour_manual(values = c("#E69F00", "#0072B2")) +
   coord_cartesian(ylim = c(0, 1.1), xlim = c(-3,3)) +
@@ -65,10 +65,10 @@ distt <- data.frame(t) %>%
   pivot_longer(2:3, names_to = "dist", values_to = "p") %>% 
   ggplot() +
   geom_line(aes(x = t, y = p, colour = dist, linetype = dist), 
-            size = 1.1) +
+            size = .9) +
   scale_linetype_manual(values = c("solid", "longdash")) +
   scale_colour_manual(values = c("#E69F00", "#0072B2")) +
-  coord_cartesian(xlim = c(.5,4), ylim = c(0,.45)) +
+  coord_cartesian(xlim = c(.5,7), ylim = c(0,.45)) +
   labs(x = expression(theta),
        y = "") +
   theme_bw() +
