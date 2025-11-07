@@ -1,0 +1,116 @@
+\documentclass{article}
+
+
+\usepackage{PRIMEarxiv}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{lipsum}
+\usepackage{fancyhdr}       % header
+\usepackage{graphicx}       % graphics
+\graphicspath{{media/}}     % organize your images and other figures under media/ folder
+
+
+% stuff Spencer added
+\usepackage{amsthm} % for proof and theorem environments
+\usepackage{amsmath} % for math text
+
+\newtheorem{theorem}{Theorem}[section]
+%Header
+\pagestyle{fancy}
+\thispagestyle{empty}
+\rhead{ \textit{ }} 
+
+% Update your Headers here
+\fancyhead[LO]{Running Title for Header}
+% \fancyhead[RE]{Firstauthor and Secondauthor} % Firstauthor et al. if more than 2 - must use \documentclass[twoside]{article}
+
+
+
+  
+%% Title
+\title{A template for Arxiv Style
+%%%% Cite as
+%%%% Update your official citation here when published 
+\thanks{\textit{\underline{Citation}}: 
+\textbf{Authors. Title. Pages.... DOI:000000/11111.}} 
+}
+
+\author{
+  Author1, Author2 \\
+  Affiliation \\
+  Univ \\
+  City\\
+  \texttt{\{Author1, Author2\}email@email} \\
+  %% examples of more authors
+   \And
+  Author3 \\
+  Affiliation \\
+  Univ \\
+  City\\
+  \texttt{email@email} \\
+  %% \AND
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+  %% \And
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+  %% \And
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+}
+
+
+\begin{document}
+\maketitle
+
+
+\begin{abstract}
+Detecting shared neural activity across individuals experiencing the same 
+naturalistic stimulus can reveal stimulus-driven brain responses, inform on 
+brain regions' 
+functional roles, and identify potential clinical biomarkers.
+Intersubject correlation (ISC) includes the primary methods
+for detecting voxelwise 
+regions of shared response and quantifying subject-level variability.
+However, ISC analyses require thousands of voxelwise tests, leading to 
+multiple-comparison problems, and even nonparametric resampling methods 
+often produce liberal sampling distribution which inflate false positives.
+ISC methods treat voxels independently and lack 
+principled ways to incorporate spatial structure.
+We propose a model-based alternative to ISC that simultaneously estimates the 
+shared neural response function and spatial activation patterns using a 
+Gaussian process framework coupled with a Bayesian spatial sparsity prior 
+inspired by the horseshoe prior.
+We examine the properties of this prior—designed to induce stronger shrinkage 
+than the standard horseshoe—and evaluate the model’s performance in simulations 
+and real fMRI data.
+The Bayesian model provides natural uncertainty quantification of the 
+shared response function, and in the analyses it demonstrates better control 
+of false positives 
+relative to ISC approaches.
+\end{abstract}
+
+
+% keywords can be removed
+\keywords{First keyword \and Second keyword \and More}
+
+\include{manuscript}
+%Bibliography
+\bibliographystyle{unsrt}  
+\bibliography{references}  
+
+
+\end{document}
