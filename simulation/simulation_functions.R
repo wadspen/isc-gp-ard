@@ -486,7 +486,7 @@ bootstrap <- function(data, n) {
 ################################################################
 
 
-get_stan_data <- function(hdr_df) {
+get_stan_data <- function(hdr_df, nu_l = 1000) {
   hdr_df_pb <- hdr_df %>%
     group_by(subject, x, y) %>%
     mutate(hdr = as.numeric(scale(hdr, center = TRUE, scale = TRUE))) %>%
@@ -580,7 +580,7 @@ get_stan_data <- function(hdr_df) {
                     sigma_tau = .1,
                     r = 1,
                     nut = 1000,
-                    nul = 1000,
+                    nul = nu_l,
                     m = 1,
                     node1 = as.integer(edges$id.a),
                     node2 = as.integer(edges$id.b))
