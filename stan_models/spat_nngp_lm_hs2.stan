@@ -28,7 +28,7 @@ data {
 }
 
 parameters {
-  real sigma;               // marginal std dev of GP
+  // real sigma;               // marginal std dev of GP
   real rho;        // lengthscale
   vector<lower=0>[C] lambda;     // horseshoe local
   array[C] real<lower=0> tau;        // observation noise sd
@@ -67,7 +67,7 @@ model {
   // lambda ~ cauchy(0, m);
   // sigma ~ normal(mu_sigma, sigma_sigma);
   // rho ~ normal(mu_rho, tau_sigma_rho .* lambda);
-  sigma ~ std_normal();
+  // sigma ~ std_normal();
   rho ~ std_normal();
   // rho ~ normal(mu_rho, tau_sigma_rho .* sqrt(lambda2_tilde));
   tau ~ normal(mu_tau, sigma_tau);
@@ -75,7 +75,8 @@ model {
   
   // for (c in 1:C) {
     target += gp_graph_exp_quad_cov_lpdf(f | zeros_vector(N), x, 
-                                         exp(mu_sigma + sigma_sigma* sigma), 
+                                          1,
+                                         // exp(mu_sigma + sigma_sigma* sigma), 
                                          // exp(mu_rho + 
                                          // tau_sigma_rho * lambda[c] * rho[c]), 
                                          exp(rho),
