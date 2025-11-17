@@ -60,7 +60,7 @@ read_bold_data <- function(data_loc = data_loc <- "../../dme_files/",
       }
     }
     bold <- readNifti(file_path)
-    all_bold[[i]] <- bold[,,,1:288]
+    all_bold[[i]] <- bold[,,,1:97]
     
   }
   
