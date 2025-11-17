@@ -38,8 +38,14 @@ read_bold_data <- function(data_loc = data_loc <- "../../dme_files/",
                          fold2 = "/ses-01/func/",
                          file = "_ses-01_task-dme_run-01_bold/func_preproc/func_pp_filter_gsr_sm0.mni152.3mm.nii.gz",
                          mask_name = "_ses-01_task-dme_run-01_bold/func_seg/wm_mask.nii",
-                         subs = 1:22) {
+                         subs = 1:22, 
+			 checker = FALSE) {
   
+  if (checker == TRUE) {
+  	fold2 <- str_replace(fold2, "dme_run-01", "checker")
+        file <- str_replace(file, "dme_run-01", "checker")
+	mask_name <- str_replace(mask_name, "dme_run-01", "checker")
+  }
   subjects <- make_subjects(subs)
   sub_names <- paste0("sub-", subjects)
   
@@ -243,7 +249,7 @@ get_stan_data <- function(hdr_df_pb, ind) {
                     nf = n%/%2 + 1,
                     edge_index = edge_index,
                     mu_rho = log(10000),
-                    sigma_rho = .1/sqrt(22*50*4),#sqrt(prod(dim(y_arr)[1:3])),
+                    sigma_rho = .1/sqrt(prod(dim(y_arr)[1:3])),
                     mu_sigma = 0,
                     sigma_sigma = .01,
                     mu_tau = 1,
