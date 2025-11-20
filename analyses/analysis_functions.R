@@ -36,7 +36,7 @@ make_subjects <- function(subs = 1:22) {
 
 read_bold_data <- function(data_loc = data_loc <- "../../dme_files/",
                          fold2 = "/ses-01/func/",
-                         file = "_ses-01_task-dme_run-01_bold/func_preproc/func_pp_filter_gsr_sm0.mni152.3mm.nii.gz",
+                         file = "_ses-01_task-dme_run-01_bold/func_preproc/func_pp_filter_sm0.mni152.3mm.nii.gz",
                          mask_name = "_ses-01_task-dme_run-01_bold/func_seg/wm_mask.nii",
                          subs = 1:22, 
 			 checker = FALSE) {
@@ -68,7 +68,7 @@ read_bold_data <- function(data_loc = data_loc <- "../../dme_files/",
 }
 
 
-get_shared_coords <- function(all_bold, subs = 1:22) {
+get_shared_coords <- function(all_bold, subs = 1:22, filtz = 27) {
   subjects <- make_subjects(subs)
   all_coords <- data.frame()
   for (i in 1:length(all_bold)) {
@@ -92,7 +92,7 @@ get_shared_coords <- function(all_bold, subs = 1:22) {
     group_by(dim1, dim2, dim3) %>%
     summarise(n_groups = n_distinct(sub), .groups = "drop") %>%
     filter(n_groups == n_distinct(all_coords$sub)) %>% 
-    filter(dim3 == 27) %>% 
+    filter(dim3 %in% filtz) %>%
     dplyr::select(-n_groups)
   
   colnames(coords_int_full) <- c("x", "y", "z")
@@ -100,58 +100,83 @@ get_shared_coords <- function(all_bold, subs = 1:22) {
 }
 
 get_hdr_df_pb <- function(all_bold, atlas_df, max_time = 50, subs = 1:22,
-                          cross_sec = 27) {
-  
+                          cross_sec = 27, coords_int_full) {
+  coords_int_full <- coords_int_full %>% 
   subjects <- make_subjects(subs)
   sub_names <- paste0("sub-", subjects)
   nsubs <- length(subjects)
   
   ab_df <- data.frame()
+  ab_ls <- list()
   for (i in 1:length(all_bold)) {
-    arr <- all_bold[[i]][,,cross_sec,]
-    nx <- dim(arr)[1]
-    ny <- dim(arr)[2]
-    nt <- dim(arr)[3]
     
-    df <- data.frame(participant_id = sub_names[i],
-                     expand.grid(x = 1:nx, y = 1:ny),
-                     matrix(aperm(arr, c(3,1,2)), nrow = nx*ny, ncol = nt, 
-                            byrow = TRUE)
-    )
     
-    # Name time columns nicely
-    colnames(df)[-(1:3)] <- paste0("t", 1:nt)
-    ab_df <- rbind(ab_df, df)
+      arr <- all_bold[[i]][,,cross_sec,]
+      if (length(cross_sec) == 1) {  
+        nx <- dim(arr)[1]
+        ny <- dim(arr)[2]
+        nt <- dim(arr)[3]
+        
+        df <- data.frame(participant_id = sub_names[i],
+                         expand.grid(x = 1:nx, y = 1:ny),
+                         matrix(aperm(arr, c(3,1,2)), nrow = nx*ny, ncol = nt, 
+                                byrow = TRUE))
+        
+        
+        # Name time columns nicely
+        colnames(df)[-(1:4)] <- paste0("t", 1:nt)
+        ab_ls[[i]] <- df
+        
+      } else if (length(cross_sec) > 1) {
+        nx <- dim(arr)[1]
+        ny <- dim(arr)[2]
+        nz <- dim(arr)[3]
+        nt <- dim(arr)[4]
+        
+        df <- data.frame(participant_id = sub_names[i],
+                         expand.grid(x = 1:nx, y = 1:ny, z = 1:nz),
+                         matrix(aperm(arr, c(4,1,2,3)), nrow = nx*ny*nz, 
+                                ncol = nt, 
+                                byrow = TRUE))
+                         
+                         
+        colnames(df)[-(1:4)] <- paste0("t", 1:nt)
+        df <- df %>% 
+          mutate(voxel = paste(x, y, z, sep = "_"))
+        ab_ls[[i]] <- df
+      }
+      
+    }
     
-  }
-  
-  hdr_df_ab <- ab_df %>% 
-    pivot_longer(4:ncol(ab_df), names_to = "time", values_to = "hdr") %>% 
-    mutate(time = as.numeric(str_replace(time, "t", ""))) %>% 
-    filter(time <= max_time)
-  
-  hdr_df_ab$hdr <- as.numeric(hdr_df_ab$hdr)
-  
-  hdr_df_ab <- hdr_df_ab %>%
-    group_by(participant_id, x, y) %>%
-    mutate(hdr = as.numeric(scale(hdr, center = TRUE, scale = TRUE))) %>%
-    ungroup() %>%
-    filter(!is.na(hdr)) %>% 
-    mutate(voxel = paste(x, y, sep = "_"))
-  
-  select_vox <- hdr_df_ab %>% 
-    dplyr::select(participant_id, voxel) %>% 
-    unique() %>% 
-    group_by(voxel) %>% 
-    summarise(n = n()) %>% 
-    filter(n == nsubs)
-  
-  hdr_df_pb <- hdr_df_ab %>% 
-    filter(voxel %in% select_vox$voxel) %>% 
-    left_join(atlas_df %>% 
-                filter(z %in% cross_sec) %>% 
-                dplyr::select(-z), by = c("x", "y")) %>% 
-    filter(roi != 0)
+    ab_df <- do.call(rbind, ab_ls)
+    start <- ifelse(length(cross_sec) == 1, 4, 5)
+    hdr_df_ab <- ab_df %>% 
+      pivot_longer(start:ncol(ab_df), names_to = "time", values_to = "hdr") %>% 
+      mutate(time = as.numeric(str_replace(time, "t", ""))) %>% 
+      filter(time <= max_time)
+    
+    hdr_df_ab$hdr <- as.numeric(hdr_df_ab$hdr)
+    
+    hdr_df_ab <- hdr_df_ab %>%
+      group_by(participant_id, x, y) %>%
+      mutate(hdr = as.numeric(scale(hdr, center = TRUE, scale = TRUE))) %>%
+      ungroup() %>%
+      filter(!is.na(hdr)) %>% 
+      mutate(voxel = paste(x, y, sep = "_"))
+    
+    select_vox <- hdr_df_ab %>% 
+      dplyr::select(participant_id, voxel) %>% 
+      unique() %>% 
+      group_by(voxel) %>% 
+      summarise(n = n()) %>% 
+      filter(n == nsubs)
+    
+    hdr_df_pb <- hdr_df_ab %>% 
+      filter(voxel %in% select_vox$voxel) %>% 
+      left_join(atlas_df %>% 
+                  filter(z %in% cross_sec) %>% 
+                  dplyr::select(-z), by = c("x", "y")) %>% 
+      filter(roi != 0)
   
   return(hdr_df_pb)
 }
@@ -163,17 +188,6 @@ get_stan_data <- function(hdr_df_pb, ind) {
     unique() %>% 
     mutate(id = row_number(), voxel = paste(x, y, sep = "_"))
   
-  edges_x <- edge_df %>% 
-    inner_join(edge_df, by = "x", suffix = c(".a", ".b")) %>%
-    filter(id.a < id.b) %>%
-    dplyr::select(id.a, id.b)
-  
-  edges_y <- edge_df %>%
-    inner_join(edge_df, by = "y", suffix = c(".a", ".b")) %>%
-    filter(id.a < id.b) %>%
-    dplyr::select(id.a, id.b)
-  
-  edges <- bind_rows(edges_x, edges_y) %>% distinct()
   
   edges <- edge_df %>%
     inner_join(edge_df, by = character(), suffix = c(".a", ".b")) %>%
@@ -263,6 +277,86 @@ get_stan_data <- function(hdr_df_pb, ind) {
   
   return(list(stan_data, hdr_df))
 }
+
+
+
+get_stan_data3D <- function(hdr_df_pb, ind, nu_t = 1000, nu_l = 1000) {
+  
+  edge_df <- hdr_df_pb %>%
+    dplyr::select(x, y, z) %>% 
+    unique() %>% 
+    mutate(id = row_number(),
+           voxel = paste(x, y, z, sep = "_"))
+  
+  edges <- edge_df %>%
+    inner_join(edge_df, by = character(), suffix = c(".a", ".b")) %>%
+    filter(id.a < id.b) %>%
+    filter(abs(x.a - x.b) + abs(y.a - y.b) + abs(z.a - z.b) == 1) %>%
+    dplyr::select(id.a, id.b)
+  
+  
+  
+  coords_int <- coords_int_full %>% 
+    mutate(voxel = paste(x, y, x, sep = "_")) %>% 
+    filter(voxel %in% unique(hdr_df_pb$voxel))
+  
+  voxels <- unique(coords_int$voxel)
+  
+  
+  hdr_df <- hdr_df_pb %>%
+    filter(roi == ind) %>% 
+    dplyr::select(participant_id, hdr, time, x, y, z, voxel)
+  
+  
+  n <- length(unique(hdr_df$time))
+  x <- unique(hdr_df$time)
+  time <- unique(hdr_df$time)
+  un_vox <- edge_df$voxel
+  
+  
+  
+  
+  y_dat_list <- list()
+  for (i in 1:length(un_vox)) {
+    y_dat <- hdr_df %>% 
+      filter(voxel == un_vox[i]) %>% 
+      pivot_wider(id_cols = time, names_from = participant_id, 
+                  values_from = hdr) %>% 
+      dplyr::select(-time) %>% 
+      t() %>% 
+      as.matrix()
+    y_dat_list[[i]] <- y_dat
+  }
+  
+  y_arr <- abind::abind(y_dat_list, along = 3)
+  
+  edge_index <- rbind(1:(ncol(y_dat) - 1), 2:ncol(y_dat))
+  
+  stan_data <- list(N = n, M = length(un_vox),
+                    S = nrow(y_dat), 
+                    n_edges = nrow(edges),
+                    C = length(unique(hdr_df$voxel)),
+                    y = y_arr,
+                    x = matrix(unique(hdr_df$time), ncol = 1)*2,
+                    dx = 1*2,
+                    nf = n%/%2 + 1,
+                    edge_index = edge_index,
+                    mu_rho = log(10000),
+                    sigma_rho = .1/sqrt(prod(dim(y_arr)[1:3])),
+                    mu_sigma = 0,
+                    sigma_sigma = .01,
+                    mu_tau = 1,
+                    sigma_tau = .1,
+                    r = 1,
+                    nut = nu_t,
+                    nul = nu_l,
+                    m = 1,
+                    node1 = as.integer(edges$id.a),
+                    node2 = as.integer(edges$id.b))
+  
+  return(list(stan_data, hdr_df))
+}
+
 
 
 
