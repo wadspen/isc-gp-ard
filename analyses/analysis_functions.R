@@ -334,7 +334,7 @@ get_stan_data3D <- function(hdr_df_pb, ind, nu_t = 1000, nu_l = 1000) {
   }
   
   y_arr <- abind::abind(y_dat_list, along = 3)
-  
+  if (dim(y_arr)[1] == 1) {y_arr <- y_arr[1,,]}
   edge_index <- rbind(1:(ncol(y_dat) - 1), 2:ncol(y_dat))
   
   stan_data <- list(N = n, M = length(un_vox),
@@ -347,7 +347,7 @@ get_stan_data3D <- function(hdr_df_pb, ind, nu_t = 1000, nu_l = 1000) {
                     nf = n%/%2 + 1,
                     edge_index = edge_index,
                     mu_rho = log(10000),
-                    sigma_rho = .1/sqrt(prod(dim(y_arr)[1:3])),
+                    sigma_rho = .1/sqrt(prod(dim(y_arr))),
                     mu_sigma = 0,
                     sigma_sigma = .01,
                     mu_tau = 1,
