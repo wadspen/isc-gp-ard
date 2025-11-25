@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --partition=lo-core
-#SBATCH --time=3-11:59:00
+#SBATCH --partition=general
+#SBATCH --time=11:59:59
 #SBATCH --nodes=1
 #SBATCH --ntasks=64
 #SBATCH --exclude=cn[473-479]
