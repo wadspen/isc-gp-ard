@@ -36,7 +36,7 @@ make_subjects <- function(subs = 1:22) {
 
 read_bold_data <- function(data_loc = data_loc <- "../../dme_files/",
                          fold2 = "/ses-01/func/",
-                         file = "_ses-01_task-dme_run-01_bold/func_preproc/func_pp_filter_sm0.mni152.3mm.nii.gz",
+                         file = "_ses-01_task-dme_run-01_bold/func_preproc/func_pp_filter_gsr_sm0.mni152.3mm.nii.gz",
                          mask_name = "_ses-01_task-dme_run-01_bold/func_seg/wm_mask.nii",
                          subs = 1:22, 
                          checker = FALSE,
