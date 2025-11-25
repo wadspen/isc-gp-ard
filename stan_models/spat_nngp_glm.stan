@@ -33,7 +33,7 @@ parameters {
   array[C] real<lower=0> tau;        // observation noise sd
   real<lower=0> tau_sigma_rho;
   vector[C] alpha;
-  vector<lower=0>[C] beta;
+  vector[C] beta;
 }
 
 transformed parameters {
