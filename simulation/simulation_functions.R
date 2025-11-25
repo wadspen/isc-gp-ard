@@ -642,6 +642,7 @@ get_sgp_fun_dist <- function(draws, hdr_df, un_vox) {
 
 
 get_gp_param_sums <- function(draws, un_vox, nsubjects, ntime) {
+  nvox <- length(unique(un_vox))
   params <- draws %>% 
     dplyr::select(!contains("f") & !contains("pred")
                   & !contains("mean_res") & !contains("resid")) %>%  
@@ -657,7 +658,7 @@ get_gp_param_sums <- function(draws, un_vox, nsubjects, ntime) {
   par_wide <- par_long %>% 
     left_join(voxels, by = "vox_num") %>% 
     pivot_wider(names_from = param, values_from = val) %>% 
-    mutate(n = nsubjects*ntime*4) %>% #prod(dim(y_arr)[1:3])) %>% 
+    mutate(n = nsubjects*ntime*nvox) %>% #prod(dim(y_arr)[1:3])) %>% 
     filter(!is.na(voxel))
   
   par_wide$tau_sigma_rho <- rep(draws$tau_sigma_rho, length(un_vox))
@@ -665,10 +666,16 @@ get_gp_param_sums <- function(draws, un_vox, nsubjects, ntime) {
   
   param_sums <- par_wide %>% 
     rowwise() %>% 
-    mutate(kappa = 1 / (1 + (nsubjects*ntime*4) * lambda^2 * tau_sigma_rho^2 
+    mutate(kappa = 1 / (1 + n * lambda^2 * tau_sigma_rho^2 
+                         * 1/(tau^2))) %>% 
+    mutate(kappa2 = 1 / (1 + (nsubjects*ntime) * lambda^2 * tau_sigma_rho^2 
+                         * 1/(tau^2))) %>% 
+    mutate(kappa3 = 1 / (1 + (nsubjects*ntime*4) * lambda^2 * tau_sigma_rho^2 
                         * 1/(tau^2))) %>% 
     group_by(voxel) %>% 
     summarise(kappa = mean(kappa),
+              kappa2 = mean(kappa2),
+              kappa3 = mean(kappa3),
               rho = mean(rho),
               lambda = mean(lambda), 
               tau = mean(tau),
