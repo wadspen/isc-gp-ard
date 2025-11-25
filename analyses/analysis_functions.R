@@ -370,10 +370,37 @@ get_results <- function(fit, stan_data) {
   hdr_df <- stan_data[[2]]
   un_vox <- unique(hdr_df$voxel)
   preds_df <- data.frame()
-  for (i in 1:length(un_vox)) {
+  nsub <- length(unique(hdr_df$participant_id))
+  ntime <- length(unique(hdr_df$time))
+  nvox <- length(unique(hdr_df$voxel))
+  # for (i in 1:length(un_vox)) {
+  #   drawszf <- draws %>% 
+  #     dplyr::select(contains("pred_res") &
+  #              contains(paste0("[",i,",")))
+  #   
+  #   preds <- apply(drawszf, MARGIN = 2, 
+  #                  FUN = median)
+  #   upp <- apply(drawszf, MARGIN = 2, 
+  #                FUN = quantile, probs = .975)
+  #   low <- apply(drawszf, MARGIN = 2, 
+  #                FUN = quantile, probs = .025)
+  #   # t <- 1:250
+  #   
+  #   # plot(preds~t, type = "l")
+  #   
+  #   pdf <- data.frame(pred = preds, 
+  #                     upper = upp,
+  #                     lower = low,
+  #                     time = unique(hdr_df$time), 
+  #                     voxel = un_vox[i])
+  #   
+  #   preds_df <- rbind(pdf, preds_df)
+  #   
+  # }
+  
+  # for (i in 1:length(un_vox)) {
     drawszf <- draws %>% 
-      dplyr::select(contains("pred_res") &
-               contains(paste0("[",i,",")))
+      dplyr::select(contains("f["))
     
     preds <- apply(drawszf, MARGIN = 2, 
                    FUN = median)
@@ -385,15 +412,16 @@ get_results <- function(fit, stan_data) {
     
     # plot(preds~t, type = "l")
     
-    pdf <- data.frame(pred = preds, 
+    preds_df <- data.frame(pred = preds, 
                       upper = upp,
                       lower = low,
-                      time = unique(hdr_df$time), 
-                      voxel = un_vox[i])
+                      time = unique(hdr_df$time)) %>% 
+      slice(rep(1:n(), each = length(un_vox)))
     
-    preds_df <- rbind(pdf, preds_df)
+    # preds_df <- rbind(pdf, preds_df)
     
-  }
+  # }
+  preds_df$voxel <- rep(un_vox, each = ntime)
   
   rownames(preds_df) <- 1:nrow(preds_df)
   
@@ -414,19 +442,23 @@ get_results <- function(fit, stan_data) {
   par_wide <- par_long %>% 
     left_join(voxels, by = "vox_num") %>% 
     pivot_wider(names_from = param, values_from = val) %>% 
-    mutate(n = 22*50*4) 
+    mutate(n = nsub*ntime*nvox) 
   
   par_wide$tau_sigma_rho <- rep(draws$tau_sigma_rho, length(un_vox))
-  par_wide$sigma <- rep(draws$sigma, length(un_vox))
   
   param_sums <- par_wide %>% 
     rowwise() %>% 
     mutate(kappa = 1 / (1 + n * lambda^2 * tau_sigma_rho^2
                         * 1/(tau^2))) %>% 
+    mutate(kappa2 = 1 / (1 + nsub * ntime * lambda^2 * tau_sigma_rho^2
+                        * 1/(tau^2))) %>% 
+    mutate(kappa3 = 1 / (1 + nsub * ntime * 4 * lambda^2 * tau_sigma_rho^2
+                        * 1/(tau^2))) %>% 
     group_by(voxel) %>% 
     summarise(kappa = mean(kappa),
-              sigma = mean(sigma),
-              mbeta = median(beta),
+              kappa2 = mean(kappa2),
+              kappa3 = mean(kappa3),
+              beta = mean(beta),
               upp_beta = quantile(beta, 
                                   probs = 0.975),
               low_beta = quantile(beta,
