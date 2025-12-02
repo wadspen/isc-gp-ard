@@ -41,7 +41,8 @@ read_bold_data <- function(data_loc = data_loc <- "../../dme_files/",
                          subs = 1:22, 
                          checker = FALSE,
                          filter = TRUE,
-                         gsr = TRUE) {
+                         gsr = TRUE,
+			 time_steps = 97) {
   
   if (checker == TRUE) {
   	fold2 <- str_replace(fold2, "dme_run-01", "checker")
@@ -65,7 +66,7 @@ read_bold_data <- function(data_loc = data_loc <- "../../dme_files/",
       }
     }
     bold <- readNifti(file_path)
-    all_bold[[i]] <- bold[,,,1:97]
+    all_bold[[i]] <- bold[,,,1:time_steps]
     
   }
   
@@ -187,7 +188,7 @@ get_hdr_df_pb <- function(all_bold, atlas_df, max_time = 50, subs = 1:22,
 }
 
 
-get_stan_data <- function(hdr_df_pb, ind) {
+get_stan_data <- function(hdr_df_pb, ind, sigma_rho_n) {
   edge_df <- hdr_df_pb %>%
     dplyr::select(x, y) %>% 
     unique() %>% 
@@ -268,7 +269,7 @@ get_stan_data <- function(hdr_df_pb, ind) {
                     nf = n%/%2 + 1,
                     edge_index = edge_index,
                     mu_rho = log(10000),
-                    sigma_rho = .1/sqrt(prod(dim(y_arr)[1:3])),
+                    sigma_rho = sigma_rho_n/((1 - sigma_rho_n)*sqrt(prod(dim(y_arr)[1:3]))),
                     mu_sigma = 0,
                     sigma_sigma = .01,
                     mu_tau = 1,
@@ -285,7 +286,7 @@ get_stan_data <- function(hdr_df_pb, ind) {
 
 
 
-get_stan_data3D <- function(hdr_df_pb, ind, nu_t = 1000, nu_l = 1000) {
+get_stan_data3D <- function(hdr_df_pb, ind, nu_t = 1000, nu_l = 1000, sigma_rho_n) {
   
   edge_df <- hdr_df_pb %>%
     dplyr::select(x, y, z) %>% 
@@ -347,7 +348,7 @@ get_stan_data3D <- function(hdr_df_pb, ind, nu_t = 1000, nu_l = 1000) {
                     nf = n%/%2 + 1,
                     edge_index = edge_index,
                     mu_rho = log(10000),
-                    sigma_rho = .1/sqrt(prod(dim(y_arr))),
+                    sigma_rho = sigma_rho_n/((1 - sigma_rho_n) * sqrt(prod(dim(y_arr)))),
                     mu_sigma = 0,
                     sigma_sigma = .01,
                     mu_tau = 1,
