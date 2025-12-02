@@ -400,27 +400,29 @@ get_results <- function(fit, stan_data) {
   # }
   
   # for (i in 1:length(un_vox)) {
-    drawszf <- draws %>% 
-      dplyr::select(contains("f["))
-    
-    preds <- apply(drawszf, MARGIN = 2, 
-                   FUN = median)
-    upp <- apply(drawszf, MARGIN = 2, 
-                 FUN = quantile, probs = .975)
-    low <- apply(drawszf, MARGIN = 2, 
-                 FUN = quantile, probs = .025)
-    # t <- 1:250
-    
-    # plot(preds~t, type = "l")
-    
-    preds_df <- data.frame(pred = preds, 
-                      upper = upp,
-                      lower = low,
-                      time = unique(hdr_df$time)) %>% 
-      slice(rep(1:n(), each = length(un_vox)))
-    
-    # preds_df <- rbind(pdf, preds_df)
-    
+  drawszf <- draws %>% 
+    dplyr::select(contains("f["))
+  
+  preds <- apply(drawszf, MARGIN = 2, 
+                 FUN = median)
+  upp <- apply(drawszf, MARGIN = 2, 
+               FUN = quantile, probs = .975)
+  low <- apply(drawszf, MARGIN = 2, 
+               FUN = quantile, probs = .025)
+  # t <- 1:250
+  
+  # plot(preds~t, type = "l")
+  
+  normfs <- apply(drawszf, MARGIN = 1, FUN = function(x) {sum(x^2)})
+  
+  preds_df <- data.frame(pred = preds, 
+                         upper = upp,
+                         lower = low,
+                         time = unique(hdr_df$time)) %>% 
+    slice(rep(1:n(), each = length(un_vox)))
+  
+  # preds_df <- rbind(pdf, preds_df)
+  
   # }
   preds_df$voxel <- rep(un_vox, each = ntime)
   
@@ -446,19 +448,29 @@ get_results <- function(fit, stan_data) {
     mutate(n = nsub*ntime*nvox) 
   
   par_wide$tau_sigma_rho <- rep(draws$tau_sigma_rho, length(un_vox))
+  par_wide$normf <- rep(normfs, length(un_vox))
   
   param_sums <- par_wide %>% 
     rowwise() %>% 
     mutate(kappa = 1 / (1 + n * lambda^2 * tau_sigma_rho^2
                         * 1/(tau^2))) %>% 
     mutate(kappa2 = 1 / (1 + nsub * ntime * lambda^2 * tau_sigma_rho^2
-                        * 1/(tau^2))) %>% 
+                         * 1/(tau^2))) %>% 
     mutate(kappa3 = 1 / (1 + nsub * ntime * 4 * lambda^2 * tau_sigma_rho^2
-                        * 1/(tau^2))) %>% 
+                         * 1/(tau^2))) %>% 
+    mutate(kappagp1 = 1 / (1 + normf * lambda^2 * tau_sigma_rho^2
+                           * 1/(tau^2))) %>% 
+    mutate(kappagp2 = 1 / (1 + nsub * normf * lambda^2 * tau_sigma_rho^2
+                           * 1/(tau^2))) %>% 
+    mutate(kappagp = 1 / (1 + nsub * nvox * normf * lambda^2 * tau_sigma_rho^2
+                          * 1/(tau^2))) %>% 
     group_by(voxel) %>% 
     summarise(kappa = mean(kappa),
               kappa2 = mean(kappa2),
               kappa3 = mean(kappa3),
+              kappagp = mean(kappagp),
+              kappagp1 = mean(kappagp1),
+              kappagp2 = mean(kappagp2),
               beta = mean(beta),
               upp_beta = quantile(beta, 
                                   probs = 0.975),
