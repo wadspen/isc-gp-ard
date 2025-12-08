@@ -316,6 +316,20 @@ get_act_res <- function(perm_zcors, hdr_df, zcor_ts) {
   return(act_res)
 }
 
+get_perm_res <- function(perm_zcors, hdr_df, zcor_ts) {
+  perm_res <- perm_zcors %>% 
+    left_join(zcor_ts, by = "voxel") %>% 
+    mutate(dp = mcorr < pmcorr) %>% 
+    group_by(voxel) %>% 
+    summarise(pval = mean(dp)) %>% 
+    ungroup() %>% 
+    mutate(n = length(unique(voxel))) %>%
+    mutate(active = ifelse(pval < .05/n, TRUE, FALSE))
+  
+  
+  return(perm_res)
+}
+
 make_zcor_df <- function(df) {
   
   pairwise_corrs <- df %>%
