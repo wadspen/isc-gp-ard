@@ -2,17 +2,20 @@
 
 for task in "checker"
 do
-   for proc_type in "filter_gsr" #"filter_nogsr" "nofilt_gsr" "nofilt_nogsr"
+   for proc_type in "nofilt_gsr" #"filter_gsr" #"filter_nogsr" "nofilt_gsr" "nofilt_nogsr"
    do
-      for model in "gp" "glm"
+      for model in "gp" #"glm"
       do
          for nut in "1000" #"3"
          do
-            for nul in "1000" "3"
+            for nul in "1000" #"3"
             do
-             	echo "$task" "$proc_type" "$model" "$nut" "$nul"
+		for sig_rho in "0.1" "0.55" "0.005" "0.01" "0.055" "0.1" "0.55"
+             	do
+		echo "$task" "$proc_type" "$model" "$nut" "$nul"
 
-		sbatch ./mc_fit_g.sh "$task" "$proc_type" "$model" "$nut" "$nul"
+		sbatch ./mc_fit_g.sh "$task" "$proc_type" "$model" "$nut" "$nul" "$sig_rho"
+		done
            done
          done
       done

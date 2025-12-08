@@ -3,7 +3,7 @@
 #SBATCH --partition=general
 #SBATCH --time=11:59:59
 #SBATCH --nodes=1
-#SBATCH --ntasks=64
+#SBATCH --ntasks=120
 #SBATCH --exclude=cn[473-479]
 #SBATCH --mem=501G
 
