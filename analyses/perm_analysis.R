@@ -9,8 +9,10 @@ args <- commandArgs()
 pmethod <- args[6]
 task <- args[7]
 proc_type <- args[8]
-
-K <- 2000
+print(pmethod)
+print(task)
+print(proc_type)
+K <- 4
 
 time_s = ifelse(task == "checker", 97, 288)
 atlas_df <- get_atlas()
@@ -32,7 +34,7 @@ options(future.debug = FALSE)
 plan(multisession, workers = min(length(file_names) + 4, 108))  # Windows-friendly
 res <- future_lapply(1:length(file_names), future.seed = TRUE,  
                      FUN = function(index) {
-                       
+                       library(schoolmath) 
                        file <- paste(data_loc, file_names[index], sep = "/")
                        hdr_df_pb <- readRDS(file)
                        
@@ -41,7 +43,7 @@ res <- future_lapply(1:length(file_names), future.seed = TRUE,
                        num_sub_vox <- length(unique(hdr_df_pb$voxel))* 
                          length(unique(hdr_df_pb$participant_id))
                        
-                       hdr_df_pb$hdr_conv <- rep(hdr_conv, num_sub_vox)
+                       
                        
                        
                        hdr_df_pb <- hdr_df_pb %>% 
@@ -62,6 +64,7 @@ res <- future_lapply(1:length(file_names), future.seed = TRUE,
                          nTime <- 97
                          des <- make_design(EVs, nTime, TR)
                          hdr_conv <- as.numeric(scale(as.numeric(des$design)))
+                         hdr_df_pb$hdr_conv <- rep(hdr_conv, num_sub_vox)
                          fun_dist <- get_est_fun_dist(hdr_df_pb)
                          
                          
