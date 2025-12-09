@@ -321,7 +321,8 @@ get_perm_res <- function(perm_zcors, hdr_df, zcor_ts) {
     left_join(zcor_ts, by = "voxel") %>% 
     mutate(dp = mcorr < pmcorr) %>% 
     group_by(voxel) %>% 
-    summarise(pval = mean(dp)) %>% 
+    # summarise(pval = mean(dp)) %>% 
+    mutate(pval = mean(dp)) %>% 
     ungroup() %>% 
     mutate(n = length(unique(voxel))) %>%
     mutate(active = ifelse(pval < .05/n, TRUE, FALSE))

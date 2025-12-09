@@ -12,7 +12,7 @@ proc_type <- args[8]
 print(pmethod)
 print(task)
 print(proc_type)
-K <- 4
+K <- 2000
 
 time_s = ifelse(task == "checker", 97, 288)
 atlas_df <- get_atlas()
@@ -72,6 +72,7 @@ res <- future_lapply(1:length(file_names), future.seed = TRUE,
                            left_join(fun_dist, by = "voxel") %>% 
                            mutate(method = pmethod) %>% 
                            mutate(roi = unique(hdr_df_pb$roi))
+                         
                        } else {
                          
                          all_res <- perm_res %>% 
