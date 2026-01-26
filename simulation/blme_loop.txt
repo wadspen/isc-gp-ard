@@ -1,0 +1,6 @@
+samps=(5 10 20 30)
+
+for s in "${samps[@]}"
+  do
+        sbatch blme_sims.sh $s
+  done
