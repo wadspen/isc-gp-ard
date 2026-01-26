@@ -30,7 +30,7 @@ print(sigma_rho)
 #nul <- 1000
 #model <- "glm"
 cmstn_file <- ifelse(model == "glm", "../stan_models/spat_nngp_glm.stan",
-		     "../stan_models/spat_nngp_lm_hs2.stan")
+		     "../stan_models/spat_nngp_lm_hs.stan")
 
 time_s = ifelse(task == "checker", 97, 288)
 atlas_df <- get_atlas()
