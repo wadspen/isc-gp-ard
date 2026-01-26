@@ -1,0 +1,15 @@
+
+for subs in 5 10 20 40
+  do
+  for nul in 1 20 #1000 3 #1
+    do
+    for sigp in 0.001 0.005 0.01 0.05 0.1 0.5
+      do
+      for eff in 0 2 1 0.5
+        do
+        #echo $sub $nul $sigp $eff
+        sbatch final_gp_sim.sh $subs $nul $sigp $eff
+      done
+    done
+  done
+done

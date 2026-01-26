@@ -1,0 +1,12 @@
+pmethod=("cyclic" "shift")
+for p in "${pmethod[@]}"
+  do
+   for subs in 40 #5 10 20 40
+     do
+      for eff in 2 1 0.5 0
+        do
+        #echo $sub $nul $sigp $eff
+        sbatch perm_sims.sh $p $subs $eff
+    done
+  done
+done
