@@ -36,11 +36,15 @@ parameters {
   vector[C] beta;
 }
 
+transformed data {
+  vector[N] f = hrf;
+}
+
 transformed parameters {
 
   
   vector<lower=0,upper=1>[C] phi = inv_logit(alpha);
-  vector[N] f = hrf;
+  
 }
 
 model {
@@ -54,21 +58,23 @@ model {
 
   
   for (c in 1:C) {
+    vector[N] mu_c = beta[c] * f;
     for (s in 1:S) {
-      y[s, , c] ~ normal(beta[c] * f, tau[c]);
+      // y[s, , c] ~ normal(mu_c, tau[c]);
+      target += normal_lpdf(y[s, , c] | beta[c] * f, tau[c]);
     }
   }
 }
 
-generated quantities {
-  array[C] vector[N] pred_res;
-  for (c in 1:C) {
-    pred_res[c] = beta[c]*f;
-  }
-  
-  
-  
-}
+// generated quantities {
+//   array[C] vector[N] pred_res;
+//   for (c in 1:C) {
+//     pred_res[c] = beta[c]*f;
+//   }
+//   
+//   
+//   
+// }
 
 
 
