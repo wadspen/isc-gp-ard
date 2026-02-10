@@ -28,6 +28,10 @@ data {
   array[n_edges] int<lower=1, upper=M> node2; // and node1[i] < node2[i]
 }
 
+transformed data {
+  vector[N] f = hrf;
+}
+
 parameters {
   vector<lower=0>[C] lambda;     // horseshoe local
   array[C] real<lower=0> tau;        // observation noise sd
@@ -36,9 +40,7 @@ parameters {
   vector[C] beta;
 }
 
-transformed data {
-  vector[N] f = hrf;
-}
+
 
 transformed parameters {
 
