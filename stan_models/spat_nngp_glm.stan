@@ -28,9 +28,9 @@ data {
   array[n_edges] int<lower=1, upper=M> node2; // and node1[i] < node2[i]
 }
 
-transformed data {
-  vector[N] f = hrf;
-}
+// transformed data {
+//   vector[N] h = hrf;
+// }
 
 parameters {
   vector<lower=0>[C] lambda;     // horseshoe local
@@ -60,23 +60,23 @@ model {
 
   
   for (c in 1:C) {
-    vector[N] mu_c = beta[c] * f;
+    vector[N] mu_c = beta[c] * hrf;
     for (s in 1:S) {
       // y[s, , c] ~ normal(mu_c, tau[c]);
-      target += normal_lpdf(y[s, , c] | beta[c] * f, tau[c]);
+      target += normal_lpdf(y[s, , c] | mu_c, tau[c]);
     }
   }
 }
 
-// generated quantities {
+generated quantities {
 //   array[C] vector[N] pred_res;
 //   for (c in 1:C) {
 //     pred_res[c] = beta[c]*f;
 //   }
-//   
-//   
-//   
-// }
+  vector[N] f = hrf;
+
+
+}
 
 
 
