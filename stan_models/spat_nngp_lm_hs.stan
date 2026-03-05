@@ -47,7 +47,7 @@ model {
   sum(alpha) ~ normal(0, 0.01 * M);
   tau_sigma_rho ~ student_t(nut, 0, sigma_rho);
   lambda ~ student_t(nul, 0, phi);
-  beta ~ student_t(nul, 0, tau_sigma_rho .* lambda);
+  beta ~ normal(0, tau_sigma_rho .* lambda);
   rho ~ std_normal();
   tau ~ normal(mu_tau, sigma_tau);
     target += gp_graph_exp_quad_cov_lpdf(f | zeros_vector(N), x, 
