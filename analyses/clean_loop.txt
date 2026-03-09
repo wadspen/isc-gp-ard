@@ -1,0 +1,24 @@
+
+for task in "checker"
+  do
+  for proc_type in "nofilt_gsr" #"nofilt_nogsr" "filter_nogsr" "filter_gsr"
+    do
+    for mod in "glm" 
+      do
+      for nut in 1000 #1 3
+        do
+      for nul in 1 1000 20 1
+        do
+        for sigp in 0.1 0.05 0.5 #0.01
+          do
+          for group in 1 2 3 4 
+            do
+              #echo $sub $nul $sigp $eff
+              sbatch clean_fit.sh $task $proc_type $mod $nut $nul $sigp $group
+      	  done
+        done
+      done
+      done
+    done
+  done
+done

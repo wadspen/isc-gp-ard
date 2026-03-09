@@ -56,8 +56,8 @@ if (!dir.exists(save_dir)) {
 #nut <- 1000
 #nul <- 1000
 
-warm <- 2000
-samp <- 3000
+warm <- 1500
+samp <- 1500
 
 data_loc <- paste("../../data_by_roi", task, proc_type, sep = "/")
 file_names <- list.files(data_loc)
@@ -97,7 +97,9 @@ foreach(index = M,
       TR <- 2.1
       nTime <- 97
       des <- make_design(EVs, nTime, TR)
-      stan_data[[1]]$hrf <- as.numeric(scale(as.numeric(des$design)))
+      des <- as.numeric(scale(as.numeric(des$design)))
+      des2 <- c(des[c(nTime, nTime - 1)], des[-c(nTime, nTime - 1)])
+      stan_data[[1]]$hrf <- des 
     }
     
     
@@ -112,7 +114,8 @@ foreach(index = M,
     
     
     res <- get_results(fit, stan_data)
-    
+    rm(fit); rm(stan_data)
+    gc()	
     res$nul <- nul
     res$sig_rho_p <- sigma_rho
     res$index <- index
@@ -126,6 +129,7 @@ foreach(index = M,
                         "_pt_", proc_type, ".rds"))
     rm(res)
     gc()
+
     NULL
  }
 # )
